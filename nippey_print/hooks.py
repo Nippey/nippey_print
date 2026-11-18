@@ -5,3 +5,6 @@ app_description = "3D printing management for ERPNext"
 app_email = "opensource@nippey.de"
 app_license = "GPL-3.0"
 required_apps = ["erpnext"]
+
+after_install = "nippey_print.label_presets.execute"
+after_migrate = "nippey_print.label_presets.execute"
