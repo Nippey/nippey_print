@@ -5,4 +5,7 @@ WORKDIR /home/frappe/frappe-bench
 COPY --chown=frappe:frappe . apps/nippey_print
 RUN env/bin/pip install --no-deps -e apps/nippey_print \
     && env/bin/python -c "from pathlib import Path; p = Path('sites/apps.txt'); apps = p.read_text().splitlines(); p.write_text('\\n'.join(dict.fromkeys(apps + ['nippey_print'])) + '\\n')" \
-    && bench build --app nippey_print
+    && bench build --app nippey_print \
+    && mkdir -p /home/frappe/frappe-bench/assets \
+    && ln -sfnT /home/frappe/frappe-bench/apps/nippey_print/nippey_print/public /home/frappe/frappe-bench/assets/nippey_print \
+    && test -r /home/frappe/frappe-bench/assets/nippey_print/js/inventory.js
