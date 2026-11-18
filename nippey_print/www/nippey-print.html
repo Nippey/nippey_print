@@ -3,11 +3,22 @@
 <div class="container py-4" style="max-width:540px">
 <h2>Filamentinventur</h2>
 <p id="status" role="status">Lade Stammdaten …</p>
+<p><a href="/nippey-print-labels">QR-Etiketten</a></p>
+<p id="label-info" role="status"></p>
 <form id="spool">
 {% for key, label in [('material','Material'),('manufacturer','Hersteller'),('colour','Farbe')] %}
 <label for="{{ key }}">{{ label }}</label>
 <select class="form-control mb-3" id="{{ key }}" required></select>
+{% if key != "material" %}
+<div id="{{ key }}-new" hidden class="mb-3">
+<label for="{{ key }}-name">Neue Bezeichnung</label>
+<input id="{{ key }}-name" maxlength="100" class="form-control mb-2">
+<button type="button" class="btn btn-secondary btn-sm" id="{{ key }}-add">Stammdatum anlegen</button>
+</div>
+{% endif %}
 {% endfor %}
+<label for="manufacturer-color">Hersteller-Farbbezeichnung (optional)</label><input id="manufacturer-color" class="form-control mb-3">
+<label for="display-color">Darstellungsfarbe (optional, HEX)</label><input id="display-color" placeholder="#383E42" pattern="#[0-9A-Fa-f]{6}" class="form-control mb-3">
 <label for="ral">RAL-Code (optional)</label><input id="ral" class="form-control mb-3">
 {% for key,label,value in [('nominal','Nenngewicht (g)',1000),('gross','Bruttogewicht (g)',''),('tare','Leerrollengewicht (g)',''),('price','Einkaufspreis (€)','')] %}
 <label for="{{ key }}">{{ label }}</label>
