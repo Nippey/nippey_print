@@ -1,6 +1,7 @@
 """Reserve durable filament labels and render repeatable A4 PDF sheets."""
 import json
 import math
+import unicodedata
 from io import BytesIO
 from urllib.parse import urlencode, urlsplit
 
@@ -47,7 +48,9 @@ def reserve_sheet(label_format, start_position=1, label_count=None):
     frappe.has_permission("Filament Label", "create", throw=True)
     settings = frappe.get_single("Nippey Print Settings")
     settings.check_permission("read")
-    base = (settings.base_url or "").strip().rstrip("/")
+    base = "".join(c for c in (settings.base_url or "") if unicodedata.category(c) != "Cf").strip().rstrip("/")
+    if any(c.isspace() or unicodedata.category(c).startswith("C") for c in base):
+        frappe.throw("Base URL contains invalid whitespace or control characters")
     url = urlsplit(base)
     if url.scheme not in ("http", "https") or not url.netloc or url.query or url.fragment or url.username or url.password:
         frappe.throw("Configure a valid HTTP(S) base URL first")
