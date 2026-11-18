@@ -97,3 +97,41 @@ def download_sheet(sheet):
     frappe.local.response.filecontent = buf.getvalue()
     frappe.local.response.type = "download"
     frappe.local.response.content_type = "application/pdf"
+
+
+@frappe.whitelist(methods=["GET"])
+def get_print_options():
+    settings = frappe.get_single("Nippey Print Settings")
+    settings.check_permission("read")
+    return {
+        "default_format": settings.default_label_format,
+        "formats": frappe.get_list("Print Label Format",
+            fields=["name", "columns", "rows", "verified"], limit_page_length=100),
+        "sheets": frappe.get_list("Print Label Sheet",
+            fields=["name", "label_format", "label_count"], order_by="creation desc",
+            limit_page_length=100),
+    }
+
+
+@frappe.whitelist(methods=["GET"])
+def calibration(label_format):
+    doc = frappe.get_doc("Print Label Format", label_format)
+    doc.check_permission("read")
+    layout = _layout(doc)
+    buf = BytesIO()
+    pdf = canvas.Canvas(buf, pagesize=(layout["page_width"]*mm, layout["page_height"]*mm))
+    pdf.setLineWidth(0.25)
+    for row in range(layout["rows"]):
+        for col in range(layout["columns"]):
+            x = (layout["margin_left"]+col*layout["pitch_x"])*mm
+            y = (layout["page_height"]-layout["margin_top"]-row*layout["pitch_y"]-layout["label_height"])*mm
+            pdf.rect(x,y,layout["label_width"]*mm,layout["label_height"]*mm)
+            pdf.setFont("Helvetica",8)
+            pdf.drawCentredString(x+layout["label_width"]*mm/2,y+layout["label_height"]*mm/2,
+                str(row*layout["columns"]+col+1))
+    pdf.showPage()
+    pdf.save()
+    frappe.local.response.filename = "calibration.pdf"
+    frappe.local.response.filecontent = buf.getvalue()
+    frappe.local.response.type = "download"
+    frappe.local.response.content_type = "application/pdf"
