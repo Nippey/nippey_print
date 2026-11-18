@@ -1,0 +1,52 @@
+{
+  "doctype": "DocType",
+  "name": "Print Label Sheet",
+  "module": "Nippey Print",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "autoname": "format:SHEET-{#####}",
+  "field_order": [
+    "label_format",
+    "start_position",
+    "label_count",
+    "layout_snapshot"
+  ],
+  "fields": [
+    {
+      "fieldname": "label_format",
+      "label": "Label Format",
+      "fieldtype": "Link",
+      "options": "Print Label Format",
+      "reqd": 1
+    },
+    {
+      "fieldname": "start_position",
+      "label": "Start Position",
+      "fieldtype": "Int",
+      "default": "1",
+      "reqd": 1
+    },
+    {
+      "fieldname": "label_count",
+      "label": "Label Count",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "layout_snapshot",
+      "label": "Layout Snapshot",
+      "fieldtype": "Long Text",
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0
+    }
+  ]
+}

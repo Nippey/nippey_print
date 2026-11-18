@@ -1,0 +1,48 @@
+{
+  "doctype": "DocType",
+  "name": "Nippey Print Settings",
+  "module": "Nippey Print",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 1,
+  "field_order": [
+    "default_label_format",
+    "base_url",
+    "company",
+    "warehouse"
+  ],
+  "fields": [
+    {
+      "fieldname": "default_label_format",
+      "label": "Default Label Format",
+      "fieldtype": "Link",
+      "options": "Print Label Format"
+    },
+    {
+      "fieldname": "base_url",
+      "label": "Base URL",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "company",
+      "label": "Company",
+      "fieldtype": "Link",
+      "options": "Company"
+    },
+    {
+      "fieldname": "warehouse",
+      "label": "Warehouse",
+      "fieldtype": "Link",
+      "options": "Warehouse"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+{
+  "doctype": "DocType",
+  "name": "Filament Label",
+  "module": "Nippey Print",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "autoname": "format:ROLL-{#####}",
+  "field_order": [
+    "status",
+    "label_sheet",
+    "position",
+    "batch"
+  ],
+  "fields": [
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Reserved\nActive\nEmpty\nArchived",
+      "default": "Reserved",
+      "reqd": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "label_sheet",
+      "label": "Label Sheet",
+      "fieldtype": "Link",
+      "options": "Print Label Sheet",
+      "reqd": 1
+    },
+    {
+      "fieldname": "position",
+      "label": "Position",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "batch",
+      "label": "Batch",
+      "fieldtype": "Link",
+      "options": "Batch",
+      "unique": 1,
+      "read_only": 1
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0
+    }
+  ]
+}

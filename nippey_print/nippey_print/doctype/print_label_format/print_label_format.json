@@ -1,0 +1,118 @@
+{
+  "doctype": "DocType",
+  "name": "Print Label Format",
+  "module": "Nippey Print",
+  "custom": 0,
+  "istable": 0,
+  "issingle": 0,
+  "autoname": "field:format_name",
+  "field_order": [
+    "format_name",
+    "manufacturer",
+    "article_number",
+    "page_width",
+    "page_height",
+    "label_width",
+    "label_height",
+    "margin_left",
+    "margin_top",
+    "pitch_x",
+    "pitch_y",
+    "columns",
+    "rows",
+    "verified"
+  ],
+  "fields": [
+    {
+      "fieldname": "format_name",
+      "label": "Format Name",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "manufacturer",
+      "label": "Manufacturer",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "article_number",
+      "label": "Article Number",
+      "fieldtype": "Data"
+    },
+    {
+      "fieldname": "page_width",
+      "label": "page width",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "page_height",
+      "label": "page height",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "label_width",
+      "label": "label width",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "label_height",
+      "label": "label height",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "margin_left",
+      "label": "margin left",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "margin_top",
+      "label": "margin top",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "pitch_x",
+      "label": "pitch x",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "pitch_y",
+      "label": "pitch y",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "columns",
+      "label": "Columns",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "rows",
+      "label": "Rows",
+      "fieldtype": "Int",
+      "reqd": 1
+    },
+    {
+      "fieldname": "verified",
+      "label": "Dimensions Verified",
+      "fieldtype": "Check"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1,
+      "delete": 0
+    }
+  ]
+}
