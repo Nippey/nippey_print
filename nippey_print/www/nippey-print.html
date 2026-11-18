@@ -1,0 +1,21 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<div class="container py-4" style="max-width:540px">
+<h2>Filamentinventur</h2>
+<p id="status" role="status">Lade Stammdaten …</p>
+<form id="spool">
+{% for key, label in [('material','Material'),('manufacturer','Hersteller'),('colour','Farbe')] %}
+<label for="{{ key }}">{{ label }}</label>
+<select class="form-control mb-3" id="{{ key }}" required></select>
+{% endfor %}
+<label for="ral">RAL-Code (optional)</label><input id="ral" class="form-control mb-3">
+{% for key,label,value in [('nominal','Nenngewicht (g)',1000),('gross','Bruttogewicht (g)',''),('tare','Leerrollengewicht (g)',''),('price','Einkaufspreis (€)','')] %}
+<label for="{{ key }}">{{ label }}</label>
+<input class="form-control mb-3" id="{{ key }}" type="number" inputmode="decimal" min="0" step="any" value="{{ value }}">
+{% endfor %}
+<p>Restmenge: <strong id="net">–</strong></p>
+<p>Restwert: <strong id="worth">–</strong></p>
+<button class="btn btn-primary w-100" disabled>Rolle erfassen (noch nicht verfügbar)</button>
+</form></div>
+<script src="/assets/nippey_print/js/inventory.js" defer></script>
+{% endblock %}
