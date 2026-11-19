@@ -24,10 +24,11 @@
 <label for="manufacturer-color">Hersteller-Farbbezeichnung (optional)</label><input id="manufacturer-color" class="form-control mb-3">
 <label for="display-color">Darstellungsfarbe (optional, HEX)</label><div class="d-flex align-items-center mb-3" style="gap:10px"><input type="color" id="color-picker" value="#808080" aria-label="Farbe wählen" style="width:64px;height:44px"><input id="display-color" placeholder="#383E42" pattern="#[0-9A-Fa-f]{6}" class="form-control"><button type="button" id="clear-color" class="btn btn-light">Leeren</button></div>
 <label for="ral">RAL-Code (optional)</label><input id="ral" class="form-control mb-3">
-{% for key,label,value in [('nominal','Nenngewicht (g)',1000),('gross','Bruttogewicht (g)',''),('tare','Leerrollengewicht (g)',''),('price','Einkaufspreis (€)','')] %}
+{% for key,label,value in [('nominal','Ursprüngliches Filament-Nettogewicht (g, ohne Spule)',1000),('gross','Aktuelles Gesamtgewicht (g, Filament + Spule)',''),('tare','Gewicht der leeren Spule (g, ohne Filament)',''),('price','Kaufpreis der ursprünglich vollen Rolle (€)','')] %}
 <label for="{{ key }}">{{ label }}</label>
 <input class="form-control mb-3" id="{{ key }}" type="number" inputmode="decimal" min="0" step="any" value="{{ value }}">
 {% endfor %}
+<p class="small text-muted">Beispiel: 750 g Filament auf einer 218 g schweren Spule = 750 g ursprüngliches Nettogewicht, 218 g Leerrollengewicht. Das aktuelle Gesamtgewicht bitte wiegen.</p>
 <p>Restmenge: <strong id="net">–</strong></p>
 <p>Restwert: <strong id="worth">–</strong></p>
 <button id="save-spool" type="button" class="btn btn-primary w-100" disabled>Rolle erfassen</button>

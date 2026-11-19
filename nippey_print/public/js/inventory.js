@@ -176,6 +176,17 @@
             const format=(v,unit="")=>v==null?"–":Number(v).toLocaleString("de-DE",{maximumFractionDigits:2})+unit;
             card.replaceChildren();
             const title=document.createElement("h3");title.textContent=m.label;card.append(title);
+            if(Number(m.nominal)>0 && m.qty!=null){
+                const percent=100*Number(m.qty)/Number(m.nominal);
+                const summary=document.createElement("p");
+                summary.className="h4 mt-3 mb-2";
+                summary.textContent=format(percent," %")+" / "+format(m.qty," g")+" verbleiben";
+                const track=document.createElement("div"),bar=document.createElement("div");
+                Object.assign(track.style,{height:"16px",borderRadius:"999px",background:"#88888835",overflow:"hidden",marginBottom:"16px"});
+                Object.assign(bar.style,{height:"100%",width:Math.max(0,Math.min(100,percent))+"%",background:"#459a70",borderRadius:"999px"});
+                track.setAttribute("role","progressbar");track.setAttribute("aria-label","Verbleibendes Filament");track.setAttribute("aria-valuemin","0");track.setAttribute("aria-valuemax","100");track.setAttribute("aria-valuenow",String(Math.max(0,Math.min(100,percent))));track.setAttribute("aria-valuetext",summary.textContent);
+                track.append(bar);card.append(summary,track);
+            }
             const list=document.createElement("dl");
             for(const [key,value] of [["Artikel",m.item],["Material",m.material],["Hersteller",m.manufacturer],["Farbe",m.colour],["Hersteller-Farbbezeichnung",m.manufacturer_color],["RAL",m.ral],["Lager",m.warehouse],["Restbestand",format(m.qty," g")],["Restwert (geschätzt)",format(m.estimated_value," €")],["Nenngewicht",format(m.nominal," g")],["Leerrollengewicht",format(m.tare," g")],["Letztes Bruttogewicht",format(m.gross," g")],["Letzte Wiegung",m.last_weighing]]){
                 const dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=key;dd.textContent=value??"–";list.append(dt,dd);
