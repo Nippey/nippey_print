@@ -198,6 +198,7 @@ def spool_details(label):
         "colour": attrs.get("Colour"), "ral": item.get("custom_ral_code"),
         "manufacturer_color": item.get("custom_manufacturer_color_name"),
         "display_color": item.get("custom_display_color"), "warehouse": settings.warehouse,
+        "drying": frappe.get_list("Filament Drying", filters={"label":tag.name}, fields=["completed_at","temperature","duration","note"], order_by="completed_at desc", limit_page_length=20),
         "qty": qty, "estimated_value": float(qty)*float(rate) if rate is not None else None,
         "nominal": batch.get("custom_nominal_weight"), "tare": batch.get("custom_spool_tare_weight"),
         "gross": batch.get("custom_last_gross_weight"), "last_weighing": batch.get("custom_last_weighing")}
@@ -319,3 +320,49 @@ def consume_spool(label, grams, expected_qty, purpose, outcome, note=""):
     entry.insert()
     entry.submit()
     return {"stock_entry":entry.name,"qty":round(qty-grams,3),"consumed":grams,"cost":entry.items[0].amount}
+
+
+@frappe.whitelist(methods=["POST"])
+def record_drying(label, temperature, duration, note=""):
+    import math
+    from frappe.utils import now_datetime
+    temperature, duration = float(temperature), float(duration)
+    note = str(note or "").strip()
+    if not all(math.isfinite(v) for v in (temperature,duration)) or not (0 < temperature <= 200 and 0 < duration <= 168) or len(note)>500:
+        frappe.throw("Invalid drying parameters")
+    tag=frappe.get_doc("Filament Label",label)
+    tag.check_permission("write")
+    frappe.db.sql("select name from `tabFilament Label` where name=%s for update",(label,))
+    tag.reload()
+    if tag.status!="Active" or not tag.batch:
+        frappe.throw("Only active rolls can be dried")
+    batch=frappe.get_doc("Batch",tag.batch)
+    batch.check_permission("write")
+    now=now_datetime()
+    log=frappe.get_doc(dict(doctype="Filament Drying",label=label,completed_at=now,temperature=temperature,duration=duration,note=note)).insert()
+    batch.custom_last_drying=now
+    batch.custom_drying_temperature=temperature
+    batch.custom_drying_duration=duration
+    batch.save()
+    return {"name":log.name}
+
+@frappe.whitelist(methods=["POST"])
+def archive_spool(label):
+    from erpnext.stock.doctype.batch.batch import get_batch_qty
+    tag=frappe.get_doc("Filament Label",label)
+    tag.check_permission("write")
+    frappe.db.sql("select name from `tabFilament Label` where name=%s for update",(label,))
+    tag.reload()
+    if tag.status not in ("Active","Empty") or not tag.batch:
+        frappe.throw("Invalid label status")
+    batch=frappe.get_doc("Batch",tag.batch)
+    batch.check_permission("write")
+    frappe.has_permission("Stock Ledger Entry","read",throw=True)
+    balances=get_batch_qty(batch_no=batch.name,item_code=batch.item)
+    if not isinstance(balances,list):
+        frappe.throw("Could not verify all warehouse balances")
+    if any(abs(float(row.get("qty") or 0))>0.000001 for row in balances):
+        frappe.throw("Roll still has stock. Book remaining material first.")
+    tag.status="Archived"
+    tag.save()
+    return {"status":tag.status}

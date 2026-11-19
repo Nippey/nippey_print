@@ -211,6 +211,32 @@
             }
             if(/^#[0-9a-f]{6}$/i.test(m.display_color||"")){const swatch=document.createElement("div");Object.assign(swatch.style,{width:"48px",height:"32px",backgroundColor:m.display_color,border:"1px solid #888",marginBottom:"12px"});card.append(swatch);}
             card.append(list);
+            byId("label-info").textContent=m.label+" – "+({Active:"Aktiv",Empty:"Leer",Archived:"Archiviert"}[m.status]||m.status);
+            if(m.drying?.length){
+                const h=document.createElement("h4");h.textContent="Trocknungshistorie";card.append(h);
+                for(const d of m.drying){const line=document.createElement("p");line.textContent=d.completed_at+" · "+format(d.temperature," °C")+" · "+format(d.duration," h")+(d.note?" · "+d.note:"");card.append(line);}
+            }
+            async function lifecycle(method,data){
+                if(!window.frappe?.csrf_token)throw Error("CSRF-Token fehlt");
+                const r=await fetch("/api/method/nippey_print.filament."+method,{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},body:JSON.stringify({label,...data})});
+                if(!r.ok)throw Error("HTTP "+r.status);
+                await showSpool();
+            }
+            if(m.status==="Active" && Number(m.qty)>0){
+                const button=document.createElement("button"),panel=document.createElement("div");button.type="button";button.className="btn btn-secondary w-100 mb-2";button.textContent="Trocknung dokumentieren";panel.hidden=true;panel.className="border rounded p-3 mb-2";
+                const field=(title,type)=>{const l=document.createElement("label"),i=document.createElement("input");l.textContent=title;l.className="d-block";i.type=type;i.className="form-control mb-2";l.append(i);panel.append(l);return i;};
+                const temp=field("Temperatur (°C)","number"),duration=field("Dauer (h)","number"),note=field("Notiz (optional)","text");
+                temp.min="0.1";temp.max="200";temp.step="any";duration.min="0.1";duration.max="168";duration.step="any";note.maxLength=500;
+                const save=document.createElement("button"),status=document.createElement("p");save.type="button";save.className="btn btn-success w-100";save.textContent="Abgeschlossene Trocknung speichern";status.setAttribute("role","status");
+                button.onclick=()=>{panel.hidden=!panel.hidden;};
+                save.onclick=async()=>{if(save.disabled)return;if(!(temp.valueAsNumber>0&&duration.valueAsNumber>0&&temp.reportValidity()&&duration.reportValidity()))return;save.disabled=true;try{await lifecycle("record_drying",{temperature:temp.value,duration:duration.value,note:note.value});}catch(e){status.textContent="Nicht bestätigt: "+e.message+". Bitte neu laden.";}};
+                panel.append(save,status);card.append(button,panel);
+            }
+            if(["Active","Empty"].includes(m.status)&&Number(m.qty)===0){
+                const archive=document.createElement("button"),status=document.createElement("p");archive.type="button";archive.className="btn btn-outline-danger w-100 mb-2";archive.textContent="Leere Rolle archivieren";
+                archive.onclick=async()=>{if(!confirm("Leere Rolle dauerhaft archivieren?"))return;archive.disabled=true;try{await lifecycle("archive_spool",{});}catch(e){status.textContent="Archivierung nicht bestätigt: "+e.message+". Bitte Bestand prüfen.";}};
+                card.append(archive,status);
+            }
             if(m.status==="Active" && Number(m.qty)>0){
                 const panel=document.createElement("div"), open=document.createElement("button");
                 open.type="button";open.className="btn btn-primary w-100 mb-2";open.textContent="Verbrauch erfassen";

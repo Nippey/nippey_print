@@ -1,0 +1,57 @@
+{
+  "doctype": "DocType",
+  "name": "Filament Drying",
+  "module": "Nippey Print",
+  "autoname": "format:DRY-{#####}",
+  "field_order": [
+    "label",
+    "completed_at",
+    "temperature",
+    "duration",
+    "note"
+  ],
+  "fields": [
+    {
+      "fieldname": "label",
+      "label": "Filament Roll",
+      "fieldtype": "Link",
+      "options": "Filament Label",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "completed_at",
+      "label": "Completed At",
+      "fieldtype": "Datetime",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "temperature",
+      "label": "Temperature (°C)",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "duration",
+      "label": "Duration (h)",
+      "fieldtype": "Float",
+      "reqd": 1
+    },
+    {
+      "fieldname": "note",
+      "label": "Note",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "create": 1
+    }
+  ],
+  "sort_field": "completed_at",
+  "sort_order": "DESC",
+  "engine": "InnoDB"
+}
