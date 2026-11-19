@@ -193,6 +193,36 @@
             }
             if(/^#[0-9a-f]{6}$/i.test(m.display_color||"")){const swatch=document.createElement("div");Object.assign(swatch.style,{width:"48px",height:"32px",backgroundColor:m.display_color,border:"1px solid #888",marginBottom:"12px"});card.append(swatch);}
             card.append(list);
+            if(m.status==="Active" && m.qty!=null && m.tare!=null && Number(m.nominal)>0){
+                const panel=document.createElement("div"), button=document.createElement("button");
+                button.type="button";button.className="btn btn-primary w-100";button.textContent="Erneut wiegen";
+                panel.hidden=true;panel.className="mt-3";
+                const weight=document.createElement("input"), reason=document.createElement("input"), result=document.createElement("p"), save=document.createElement("button");
+                weight.type="number";weight.step="any";weight.min="0";weight.className="form-control mb-2";weight.placeholder="Aktuelles Gesamtgewicht (g)";weight.setAttribute("aria-label",weight.placeholder);
+                reason.className="form-control mb-2";reason.placeholder="Grund der Bestandskorrektur";reason.setAttribute("aria-label",reason.placeholder);reason.maxLength=500;
+                const preview=document.createElement("p");result.setAttribute("role","status");
+                save.type="button";save.className="btn btn-success w-100";save.textContent="Wiegung speichern";
+                function update(){
+                    const n=weight.valueAsNumber-Number(m.tare), d=n-Number(m.qty);
+                    const valid=Number.isFinite(n)&&n>=0&&n<=Number(m.nominal)*1.1;
+                    preview.textContent=valid?format(n," g")+" verbleiben · Korrektur: "+(d>0?"+":"")+format(d," g"):"Bitte gültiges Gesamtgewicht eingeben.";
+                    save.disabled=!valid||!reason.value.trim();
+                }
+                weight.addEventListener("input",update);reason.addEventListener("input",update);
+                button.addEventListener("click",()=>{panel.hidden=!panel.hidden;if(!panel.hidden)weight.focus();});
+                save.addEventListener("click",async()=>{
+                    if(save.disabled)return;save.disabled=true;weight.disabled=true;reason.disabled=true;result.textContent="Wiegung wird gespeichert …";
+                    try{
+                        if(!window.frappe?.csrf_token)throw Error("CSRF-Token fehlt");
+                        const r=await fetch("/api/method/nippey_print.filament.reweigh_spool",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},body:JSON.stringify({label,gross:weight.value,expected_qty:m.qty,reason:reason.value})});
+                        const payload=await r.json();
+                        if(!r.ok){let detail="";try{detail=JSON.parse(payload._server_messages||"[]").map(x=>JSON.parse(x).message).join(" ");}catch{}throw Error("HTTP "+r.status+(detail?" – "+detail:""));}
+                        await showSpool();
+                        const message=document.createElement("p");message.className="text-success";message.textContent="Wiegung gespeichert"+(payload.message.stock_entry?" · "+payload.message.stock_entry:" (keine Bestandsänderung)");byId("spool-card").prepend(message);
+                    }catch(e){result.textContent="Nicht bestätigt: "+e.message+". Bitte Seite neu laden und Bestand prüfen.";}
+                });
+                panel.append(weight,reason,preview,save,result);card.append(button,panel);update();
+            }
         }catch(e){card.textContent="Rollendaten konnten nicht geladen werden: "+e.message;}
     }
     if (label) {

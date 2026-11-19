@@ -201,3 +201,65 @@ def spool_details(label):
         "qty": qty, "estimated_value": float(qty)*float(rate) if rate is not None else None,
         "nominal": batch.get("custom_nominal_weight"), "tare": batch.get("custom_spool_tare_weight"),
         "gross": batch.get("custom_last_gross_weight"), "last_weighing": batch.get("custom_last_weighing")}
+
+
+@frappe.whitelist(methods=["POST"])
+def reweigh_spool(label, gross, expected_qty, reason):
+    import math
+    from frappe.utils import now_datetime
+    gross, expected_qty = float(gross), float(expected_qty)
+    reason = str(reason or "").strip()
+    if not reason or len(reason) > 500 or not all(math.isfinite(x) for x in (gross, expected_qty)):
+        frappe.throw("Invalid weight or reason")
+    tag = frappe.get_doc("Filament Label", label)
+    tag.check_permission("write")
+    frappe.db.sql("select name from `tabFilament Label` where name=%s for update", (label,))
+    tag.reload()
+    if tag.status != "Active" or not tag.batch:
+        frappe.throw("Only active spools can be weighed")
+    details = spool_details(label)
+    batch = frappe.get_doc("Batch", tag.batch)
+    batch.check_permission("write")
+    if batch.get("custom_spool_tare_weight") is None or not details["nominal"]:
+        frappe.throw("Missing spool weight")
+    net = round(gross - float(details["tare"]), 3)
+    qty = float(details["qty"])
+    if net < 0 or net > float(details["nominal"])*1.1:
+        frappe.throw("Invalid net weight")
+    if abs(qty-expected_qty)>0.0005:
+        frappe.throw("Stock changed. Reload before weighing.")
+    delta = round(net - qty, 3)
+    settings = frappe.get_single("Nippey Print Settings")
+    if frappe.db.get_value("Company", settings.company, "enable_perpetual_inventory"):
+        frappe.throw("This workflow requires non-perpetual inventory")
+    entry = None
+    if delta:
+        issue = delta < 0
+        purpose = "Material Issue" if issue else "Material Receipt"
+        row = dict(item_code=batch.item, qty=abs(delta), uom="Gram", stock_uom="Gram",
+            conversion_factor=1, use_serial_batch_fields=1, batch_no=batch.name)
+        if issue:
+            row["s_warehouse"] = settings.warehouse
+        else:
+            rate = None
+            receipts = frappe.get_list("Stock Entry", filters={"company":settings.company,
+                "docstatus":1,"remarks":"Filament opening inventory: "+tag.name}, pluck="name", limit_page_length=2)
+            if len(receipts)==1:
+                receipt=frappe.get_doc("Stock Entry", receipts[0])
+                receipt.check_permission("read")
+                lines=[r for r in receipt.items if r.item_code==batch.item]
+                if len(lines)==1:
+                    rate=lines[0].basic_rate
+            if rate is None:
+                frappe.throw("Original valuation rate not found")
+            row.update(t_warehouse=settings.warehouse,basic_rate=rate,
+                set_basic_rate_manually=1,allow_zero_valuation_rate=int(rate==0))
+        entry=frappe.get_doc(dict(doctype="Stock Entry",company=settings.company,
+            stock_entry_type=purpose,purpose=purpose,
+            remarks="Filament weighing correction: "+tag.name+" | "+reason,items=[row]))
+        entry.insert()
+        entry.submit()
+    batch.custom_last_gross_weight=gross
+    batch.custom_last_weighing=now_datetime()
+    batch.save()
+    return {"qty":net,"delta":delta,"stock_entry":entry.name if entry else None}
