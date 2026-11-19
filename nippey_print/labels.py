@@ -127,7 +127,8 @@ def get_print_options():
     settings = frappe.get_single("Nippey Print Settings")
     settings.check_permission("read")
     frappe.has_permission("Filament Label", "read", throw=True)
-    current = frappe.db.get_value("Series", "ROLL-", "current") or 0
+    rows = frappe.db.sql("select `current` from `tabSeries` where name=%s", ("ROLL-",))
+    current = rows[0][0] if rows else 0
     return {
         "next_roll": int(current) + 1,
         "default_format": settings.default_label_format,
