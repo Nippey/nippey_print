@@ -1,0 +1,16 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<div class="container py-4" style="max-width:800px">
+<h2>Druckprodukte</h2><p><a href="/nippey-print-home">← nippey.print Startseite</a></p>
+<p id="product-status" role="status">Lade Produkte …</p>
+<label for="product-select">Produkt</label><select id="product-select" class="form-control mb-3"></select>
+<p id="product-description"></p>
+<form id="product-form"><div id="product-fields"></div>
+<label for="product-name">Konfigurationsname</label><input id="product-name" class="form-control mb-3" required>
+<button class="btn btn-primary" id="product-save" disabled>Konfiguration speichern</button></form>
+<h3 class="mt-4">Vorhandene Konfigurationen</h3><div id="product-list"></div>
+<p><a href="/app/print-product">Produktdefinitionen</a> · <a href="/app/print-model-revision">Modellrevisionen</a> · <a href="/app/print-profile">Slicer-Profile</a></p>
+</div>
+<script defer src="/assets/nippey_print/js/products.js?v=__PORTAL_BUILD__"></script>
+<p class="text-center text-muted small">nippey.print __PORTAL_VERSION__ · Build __PORTAL_BUILD__</p>
+{% endblock %}
