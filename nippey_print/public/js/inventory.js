@@ -57,7 +57,7 @@
             fill("material",m.materials.map(x=>({value:x.item_code,label:x.item_name})));
             fill("manufacturer",m.manufacturers.map(x=>({value:x.value,label:x.value})));
             fill("colour",m.colours.map(x=>({value:x.value,label:x.value})));
-            byId("status").textContent = "Stammdaten geladen. Bitte QR-Etikett scannen, um eine Rolle zu erfassen.";
+            byId("status").textContent = "Stammdaten geladen. QR-Etikett scannen oder Rollennummer auswählen.";
             calculate();
         })
         .catch(error => { byId("status").textContent = "Stammdaten konnten nicht geladen werden: " + error.message; });
@@ -81,6 +81,7 @@
                     select.add(new Option(m.value,m.value),select.options.length-1);
                 }
                 select.value = m.value; panel.hidden = true;
+                select.dispatchEvent(new Event("change"));
                 byId(id+"-name").value = "";
                 byId("status").textContent = "Stammdatum gespeichert.";
                 calculate();
@@ -89,6 +90,54 @@
         });
     }
     const label = new URLSearchParams(location.search).get("label");
+    const manual=byId("manual-label");
+    manual.value=label||"";
+    let searchSeq=0;
+    async function suggestions(){
+        const seq=++searchSeq;
+        try {
+            const r=await fetch("/api/method/nippey_print.filament.available_labels?"+new URLSearchParams({query:manual.value}),{credentials:"same-origin"});
+            if(!r.ok) throw Error("HTTP "+r.status);
+            const {message}=await r.json();
+            if(seq===searchSeq) byId("available-labels").replaceChildren(...message.map(v=>new Option(v,v)));
+        } catch(e) { if(seq===searchSeq) byId("available-labels").replaceChildren(); }
+    }
+    manual.addEventListener("focus",suggestions);
+    manual.addEventListener("input",suggestions);
+    function chooseLabel(){
+        const q=manual.value.trim().toUpperCase();
+        if(!/^(ROLL-)?[0-9]{1,12}$/.test(q)) return;
+        const code="ROLL-"+q.replace(/^ROLL-/,"").padStart(5,"0");
+        if(code!==label && [...byId("spool").querySelectorAll("input")].some(e=>e.value && e.id!=="nominal" && e.id!=="color-picker") && !confirm("Rollennummer wechseln und bisherige Eingaben verwerfen?")) return;
+        location.href="/nippey-print?"+new URLSearchParams({label:code});
+    }
+    byId("choose-label").addEventListener("click",chooseLabel);
+    manual.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();chooseLabel();}});
+    manual.addEventListener("change",()=>{if([...byId("available-labels").options].some(o=>o.value===manual.value)) chooseLabel();});
+    const hex=byId("display-color"), picker=byId("color-picker");
+    const sync=()=>{picker.value=/^#[0-9a-f]{6}$/i.test(hex.value)?hex.value:"#808080";calculate();};
+    picker.addEventListener("input",()=>{hex.value=picker.value;calculate();});
+    hex.addEventListener("input",sync);
+    byId("clear-color").addEventListener("click",()=>{hex.value="";sync();});
+    let metaSeq=0;
+    async function metadata(){
+        const seq=++metaSeq;
+        const args=Object.fromEntries(["material","manufacturer","colour"].map(k=>[k,byId(k).value]));
+        const fallback={red:"#ff0000",green:"#008000",blue:"#0000ff",black:"#000000",white:"#ffffff"};
+        hex.value="";byId("ral").value="";byId("manufacturer-color").value="";sync();
+        picker.value=fallback[args.colour.toLowerCase()]||"#808080";
+        if(Object.values(args).some(v=>!v||v==="__new__"))return;
+        try{
+            const r=await fetch("/api/method/nippey_print.filament.colour_metadata?"+new URLSearchParams(args),{credentials:"same-origin"});
+            if(!r.ok)return;
+            const {message:m}=await r.json();
+            if(seq!==metaSeq)return;
+            if(!hex.value && m.display_color){hex.value=m.display_color;sync();}
+            if(!byId("ral").value)byId("ral").value=m.ral||"";
+            if(!byId("manufacturer-color").value)byId("manufacturer-color").value=m.manufacturer_color||"";
+        }catch{}
+    }
+    for(const k of ["material","manufacturer","colour"])byId(k).addEventListener("change",metadata);
     if (label) {
         byId("label-info").textContent = "Prüfe Etikett …";
         fetch("/api/method/nippey_print.filament.get_label?"+new URLSearchParams({label}),{credentials:"same-origin"})

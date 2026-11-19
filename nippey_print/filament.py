@@ -134,3 +134,34 @@ def register_spool(label, material, manufacturer, colour, nominal, gross, tare, 
     tag.save()
     return {"label": tag.name, "batch": batch.name, "item": item.name,
             "stock_entry": entry.name, "net": net}
+
+
+@frappe.whitelist(methods=["GET"])
+def available_labels(query=""):
+    import re
+    q = str(query or "").strip().upper()
+    if q and not re.fullmatch(r"(?:ROLL-)?[0-9]{0,12}", q):
+        return []
+    filters = {"status": "Reserved"}
+    if q:
+        filters["name"] = ["like", "%" + q.removeprefix("ROLL-") + "%"]
+    return frappe.get_list("Filament Label", filters=filters, pluck="name",
+                           order_by="name asc", limit_page_length=50)
+
+
+@frappe.whitelist(methods=["GET"])
+def colour_metadata(material, manufacturer, colour):
+    from erpnext.controllers.item_variant import get_variant
+    frappe.has_permission("Item", "read", throw=True)
+    template = frappe.get_doc("Item", material)
+    template.check_permission("read")
+    if not template.has_variants or not template.item_code.startswith("FIL-"):
+        return {}
+    name = get_variant(material, args={"Manufacturer": manufacturer, "Colour": colour})
+    if not name:
+        return {}
+    item = frappe.get_doc("Item", name)
+    item.check_permission("read")
+    return {"display_color": item.get("custom_display_color"),
+            "ral": item.get("custom_ral_code"),
+            "manufacturer_color": item.get("custom_manufacturer_color_name")}
