@@ -73,10 +73,20 @@ def download_sheet(sheet):
         fields=["name", "position"], order_by="position asc", limit_page_length=MAX_LABELS)
     if len(labels) != doc.label_count:
         frappe.throw("Label sheet is incomplete or not accessible")
+    _render_labels(layout, labels, doc.name + ".pdf")
+
+
+def _render_labels(layout, labels, filename):
     buf = BytesIO()
     pdf = canvas.Canvas(buf, pagesize=(layout["page_width"]*mm, layout["page_height"]*mm))
+    capacity = layout["columns"] * layout["rows"]
+    page = 0
     for label in labels:
-        row, col = divmod(label.position-1, layout["columns"])
+        next_page, pos = divmod(label.position-1, capacity)
+        while page < next_page:
+            pdf.showPage()
+            page += 1
+        row, col = divmod(pos, layout["columns"])
         x = (layout["margin_left"]+col*layout["pitch_x"])*mm
         y = (layout["page_height"]-layout["margin_top"]-row*layout["pitch_y"]-layout["label_height"])*mm
         size = min(layout["label_height"]-2, 23)*mm
@@ -96,7 +106,7 @@ def download_sheet(sheet):
         pdf.drawString(tx,y+layout["label_height"]*mm/2,label.name)
     pdf.showPage()
     pdf.save()
-    frappe.local.response.filename = doc.name + ".pdf"
+    frappe.local.response.filename = filename
     frappe.local.response.filecontent = buf.getvalue()
     frappe.local.response.type = "download"
     frappe.local.response.content_type = "application/pdf"
@@ -138,3 +148,27 @@ def calibration(label_format):
     frappe.local.response.filecontent = buf.getvalue()
     frappe.local.response.type = "download"
     frappe.local.response.content_type = "application/pdf"
+
+
+@frappe.whitelist(methods=["GET"])
+def reprint_sheet(sheet, label_format, start_position=1, first=1, count=None):
+    doc = frappe.get_doc("Print Label Sheet", sheet)
+    doc.check_permission("read")
+    fmt = frappe.get_doc("Print Label Format", label_format)
+    fmt.check_permission("read")
+    if not fmt.verified:
+        frappe.throw("Verify the label dimensions before printing")
+    layout = _layout(fmt)
+    capacity = layout["columns"] * layout["rows"]
+    labels = frappe.get_list("Filament Label", filters={"label_sheet": doc.name},
+        fields=["name", "position"], order_by="position asc", limit_page_length=MAX_LABELS)
+    if len(labels) != doc.label_count:
+        frappe.throw("Label sheet is incomplete or not accessible")
+    start, first = int(start_position), int(first)
+    count = len(labels)-first+1 if count is None else int(count)
+    if not (1 <= start <= capacity and 1 <= first <= len(labels) and 1 <= count <= len(labels)-first+1):
+        frappe.throw("Invalid reprint range")
+    layout["base_url"] = json.loads(doc.layout_snapshot)["base_url"]
+    for index, label in enumerate(labels[first-1:first-1+count]):
+        label.position = start+index
+    _render_labels(layout, labels[first-1:first-1+count], doc.name + "-reprint.pdf")

@@ -28,7 +28,7 @@
             const p = document.createElement("p"), a = document.createElement("a");
             a.href = url("download_sheet",{sheet:s.name});
             a.textContent = s.name + " – " + s.label_format + " (" + s.label_count + ")";
-            p.append(a); return p;
+            const b=document.createElement("button"); b.type="button"; b.className="btn btn-sm btn-secondary ml-2"; b.textContent="Erneut drucken"; b.addEventListener("click",()=>openReprint(s)); p.append(a,b); return p;
         }));
         sync(true);
     }
@@ -52,6 +52,35 @@
             await load();
         } catch (e) { status("Fehler: " + e.message + ". Vor erneutem Reservieren die Bogenliste prüfen."); }
         finally { busy = false; sync(); }
+    });
+    let source=null;
+    function reprintSync(){
+        const f=formats.find(x=>x.name===el("reprint-format").value);
+        const cap=f?f.columns*f.rows:0;
+        const start=Number(el("reprint-start").value), first=Number(el("reprint-first").value), count=Number(el("reprint-count").value);
+        el("reprint-start").max=cap;
+        el("reprint-count").max=source?source.label_count-first+1:0;
+        const valid=!!source && !!f?.verified && start>=1 && start<=cap && first>=1 && count>=1 && first+count-1<=source.label_count && [start,first,count].every(Number.isInteger);
+        el("reprint-download").disabled=!valid;
+        el("reprint-pages").textContent=valid?Math.ceil((start-1+count)/cap)+" Druckbogen – keine neuen IDs.":"Bitte bestätigtes Format und gültigen Bereich wählen.";
+    }
+    function openReprint(s){
+        source=s;
+        el("reprint-source").textContent=s.name+" ("+s.label_count+" Etiketten)";
+        el("reprint-format").replaceChildren(...formats.map(f=>new Option(f.name+(f.verified?"":" (unbestätigt)"),f.name)));
+        el("reprint-format").value=s.label_format;
+        el("reprint-start").value=1;
+        el("reprint-first").value=1; el("reprint-first").max=s.label_count;
+        el("reprint-count").value=s.label_count;
+        el("reprint-form").hidden=false; reprintSync();
+        el("reprint-form").scrollIntoView({block:"nearest"});
+    }
+    el("reprint-form").addEventListener("input",reprintSync);
+    el("reprint-form").addEventListener("change",reprintSync);
+    el("reprint-form").addEventListener("submit",e=>{
+        e.preventDefault(); reprintSync();
+        if(el("reprint-download").disabled)return;
+        location.href=url("reprint_sheet",{sheet:source.name,label_format:el("reprint-format").value,start_position:el("reprint-start").value,first:el("reprint-first").value,count:el("reprint-count").value});
     });
     load().then(() => status("Bereit. Unbestätigte Formate zuerst kalibrieren.")).catch(e => status("Fehler: " + e.message));
 })();

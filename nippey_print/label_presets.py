@@ -20,6 +20,15 @@ def execute():
             margin_top=(297-rows*height)/2,
             pitch_x=pitch_x, pitch_y=pitch_y, verified=0
         )).insert()
+    for code, width, height, columns, rows in (("3657", 48.5, 25.4, 4, 10), ("3666", 38, 21.2, 5, 13)):
+        name = "Avery " + code
+        if not frappe.db.exists("Print Label Format", name):
+            frappe.get_doc(dict(doctype="Print Label Format", format_name=name,
+                manufacturer="Avery Zweckform", article_number=code,
+                page_width=210, page_height=297, label_width=width, label_height=height,
+                columns=columns, rows=rows, margin_left=(210-columns*width)/2,
+                margin_top=(297-rows*height)/2, pitch_x=width, pitch_y=height,
+                verified=0)).insert()
     settings = frappe.get_single("Nippey Print Settings")
     if not settings.default_label_format:
         settings.default_label_format = "Avery L6140"
