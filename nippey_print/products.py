@@ -11,7 +11,21 @@ def overview():
             parameters=[{k:r.get(k) for k in ("parameter_key","parameter_label","parameter_type","choices","default_value","required_value","unit")} for r in d.parameters]))
     configurations=frappe.get_list("Print Configuration",fields=["name","product","configuration_name","parameter_values","geometry_signature"],limit_page_length=0,order_by="modified desc")
     revisions=frappe.get_list("Print Model Revision",fields=["name","configuration","internal_revision","status"],limit_page_length=0,order_by="modified desc")
-    return dict(products=products,configurations=configurations,revisions=revisions)
+    colours={}
+    for row in frappe.get_list("Item", filters={"variant_of":"FIL-ASA","disabled":0},
+        fields=["name","custom_ral_code","custom_manufacturer_color_name","custom_display_color"],limit_page_length=0):
+        item=frappe.get_doc("Item",row.name)
+        item.check_permission("read")
+        shade=next((a.attribute_value for a in item.attributes if a.attribute=="Colour"),None)
+        ral=str(row.custom_ral_code or "").strip().upper().removeprefix("RAL").strip()
+        value="RAL "+ral if ral else (shade or row.custom_manufacturer_color_name)
+        if not value: continue
+        hex_value=str(row.custom_display_color or "")
+        import re
+        if not re.fullmatch(r"#[0-9a-fA-F]{6}",hex_value): hex_value=None
+        if value not in colours or (not colours[value]["hex"] and hex_value):
+            colours[value]=dict(value=value,label=row.custom_manufacturer_color_name or shade or value,hex=hex_value)
+    return dict(products=products,configurations=configurations,revisions=revisions,colours=sorted(colours.values(),key=lambda c:c["value"]))
 
 @frappe.whitelist(methods=["POST"])
 def create_configuration(product,configuration_name,parameter_values):
