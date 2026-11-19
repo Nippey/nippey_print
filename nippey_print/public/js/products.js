@@ -1,7 +1,31 @@
 (()=>{
 const el=k=>document.getElementById("product-"+k), node=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
 let data,controls=[],lastSuggestion='';
+function visualize(){
+ const p=data.products.find(x=>x.name===el("select").value);
+ const target=el("preview");target.replaceChildren();
+ if(!p||p.visualizer_key!=="fence-light-standard")return;
+ const v=Object.fromEntries(controls.map(([k,i])=>[k,i.type==="checkbox"?i.checked:i.value]));
+ const ns="http://www.w3.org/2000/svg";
+ const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 340 230");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label","Schematische Zaunleuchte");
+ function add(tag,attrs,label){const n=document.createElementNS(ns,tag);for(const [k,val] of Object.entries(attrs))n.setAttribute(k,String(val));if(label)n.textContent=label;svg.append(n);}
+ const color=({"7016":"#383e42","9005":"#171819","9006":"#a5a8a6"})[String(v.housing_colour).replace(/^RAL\s*/i,"").trim()]||"#777";
+ const u=Math.max(0,Math.min(75,(Number(v.overhang)||0)*1.5)), h=Number(v.hole_position)||0;
+ for(let x=28;x<=124;x+=24)add("path",{d:"M"+x+" 115V215",stroke:"#92989d","stroke-width":4});
+ for(let y=125;y<=215;y+=30)add("path",{d:"M12 "+y+"H141",stroke:"#92989d","stroke-width":4});
+ add("rect",{x:141,y:70,width:70,height:150,fill:color,stroke:"#888"});
+ add("rect",{x:132,y:115,width:9,height:105,fill:"#777"});
+ add("rect",{x:132-u,y:59,width:89+u,height:29,rx:4,fill:color,stroke:"#888"});
+ for(const x of [...(v.light_position!=="H"?[135-u]:[]),...(v.light_position!=="V"?[201]:[])]){
+   add("path",{d:"M"+x+" 88 l-18 57 h53 l-18 -57Z",fill:v.warm_filter?"#efc66f":"#e5e8da",opacity:.3});
+   add("rect",{x,y:84,width:17,height:5,rx:2,fill:v.warm_filter?"#ffd174":"#f0f4df"});
+ }
+ if(h>0)add("circle",{cx:v.light_position==="H"?202:150,cy:Math.min(211,89+h*.5),r:4,fill:"#111",stroke:"#aaa"});
+ [[85,24,"Vorne"],[255,24,"Hinten"],[260,185,"60 × 40 mm"],[260,201,"Pfosten"],[170,45,"Ü "+v.overhang+" mm · B "+v.hole_position+" mm"]].forEach(([x,y,t])=>add("text",{x,y,"text-anchor":"middle","font-size":11,fill:"currentColor"},t));
+ target.append(svg);target.append(node("small","Schematisch, nicht maßstäblich; unbekannte Farben grau."));
+}
 function suggest(){
+ visualize();
  const p=data.products.find(x=>x.name===el('select').value);if(!p||p.visualizer_key!=='fence-light-standard')return;
  const v=Object.fromEntries(controls.map(([k,i])=>[k,i.type==='checkbox'?i.checked:i.value]));
  const color=String(v.housing_colour||'').trim().replace(/^RAL\s*/i,'').replace(/\s+/g,'-');
@@ -19,7 +43,7 @@ function render(){
    else{i.type=r.parameter_type==="Check"?"checkbox":["Integer","Decimal"].includes(r.parameter_type)?"number":"text";if(i.type==="number"){i.step=r.parameter_type==="Integer"?"1":"any";if(["overhang","hole_position","post_width","post_depth"].includes(r.parameter_key))i.min="0";}}
    if(i.type==="checkbox"){i.checked=["1","true","True"].includes(String(r.default_value));i.className="ml-2";}
    else{i.value=r.default_value??"";i.required=!!r.required_value;i.className="form-control mb-2";}
-   l.append(i);el("fields").append(l);controls.push([r.parameter_key,i]);i.addEventListener('input',suggest);i.addEventListener('change',suggest);
+   l.append(i);el("fields").append(l);if(p.visualizer_key==="fence-light-standard"&&["overhang","hole_position"].includes(r.parameter_key)){const presets=node("div");presets.className="mb-2";for(const [value,title] of (r.parameter_key==="overhang"?[["17","Standard · 17 mm"],["0","Kurz · 0 mm"]]:[["0","Ohne"],["57","Camas · 57 mm"]])){const b=node("button",title);b.type="button";b.className="btn btn-sm btn-outline-secondary mr-2";b.onclick=()=>{i.value=value;suggest();};presets.append(b);}el("fields").append(presets);}controls.push([r.parameter_key,i]);i.addEventListener('input',suggest);i.addEventListener('change',suggest);
  }
  suggest();el("save").disabled=false;el("list").replaceChildren();
  for(const c of data.configurations.filter(x=>x.product===p.name)){
