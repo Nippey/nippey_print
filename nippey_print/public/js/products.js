@@ -7,11 +7,61 @@ function colorCode(value){
  if(m)return m[1]+(ralNames[m[1]]||(m[2]||"").slice(0,2).toLowerCase());
  return s.replace(/\s+/g,"-");
 }
+
+// Illustrative footprint only: actual LED dimensions and CAD tangencies are not known.
+const LED_PREVIEW_SIZE=30;
+function specialPreview(target,v){
+ const w=Number(v.post_width),h=Number(v.post_depth),x=Number(v.led_x),y=Number(v.led_y);
+ if(!(w>0&&h>0)||v.led_x===""||v.led_y===""||![w,h,x,y].every(Number.isFinite)){
+   target.append(node("p","Pfostenmaße und LED-Mittelpunkt eingeben."));return;
+ }
+ const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg"),s=LED_PREVIEW_SIZE/2;
+ const corners=(cx,cy,a,b,type)=>[[-a,-b],[a,-b],[a,b],[-a,b]].map(([dx,dy])=>({x:cx+dx,y:cy+dy,type}));
+ const post=corners(0,0,w/2,h/2,"post"),led=corners(x,y,s,s,"led"),all=[...post,...led];
+ const minX=Math.min(...all.map(p=>p.x)),maxX=Math.max(...all.map(p=>p.x)),minY=Math.min(...all.map(p=>p.y)),maxY=Math.max(...all.map(p=>p.y));
+ const pad=Math.max(w,h,maxX-minX,maxY-minY)*.22;
+ svg.setAttribute("viewBox",[minX-pad,minY-pad,maxX-minX+2*pad,maxY-minY+2*pad].join(" "));svg.style.width="100%";svg.style.maxHeight="350px";svg.setAttribute("role","img");svg.setAttribute("aria-label","Draufsicht Sonderanfertigung");
+ function add(tag,attrs,label){const n=document.createElementNS(ns,tag);for(const [k,val] of Object.entries(attrs))n.setAttribute(k,String(val));if(label)n.textContent=label;svg.append(n);return n;}
+ const cross=(a,b,c)=>(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+ const sorted=[...all].sort((a,b)=>a.x-b.x||a.y-b.y);
+ const half=ps=>{const out=[];for(const p of ps){while(out.length>1&&cross(out[out.length-2],out[out.length-1],p)<=0)out.pop();out.push(p);}return out.slice(0,-1);};
+ const hull=[...half(sorted),...half([...sorted].reverse())];
+ const style={fill:"#7896a5","fill-opacity":.3,stroke:"#7896a5","stroke-width":1.5,"vector-effect":"non-scaling-stroke"};
+ if(v.outer_contour==="Bounding Box")add("rect",{x:minX,y:minY,width:maxX-minX,height:maxY-minY,...style});
+ else{
+   let d="M"+hull[0].x+" "+hull[0].y;
+   for(let i=0;i<hull.length;i++){
+     const a=hull[i],b=hull[(i+1)%hull.length],dx=b.x-a.x,dy=b.y-a.y,n=Math.hypot(dx,dy)||1;
+     if(a.type!==b.type&&["Konkav","Konvex"].includes(v.outer_contour)){
+       const k=n*.20*(v.outer_contour==="Konkav"?1:-1);
+       d+=" Q"+((a.x+b.x)/2-dy/n*k)+" "+((a.y+b.y)/2+dx/n*k)+" "+b.x+" "+b.y;
+     }else d+=" L"+b.x+" "+b.y;
+   }
+   add("path",{d:d+" Z",...style});
+ }
+ add("rect",{x:-w/2,y:-h/2,width:w,height:h,fill:"#555e64",stroke:"#92999e","stroke-width":.6});
+ add("rect",{x:x-s,y:y-s,width:2*s,height:2*s,fill:v.warm_filter?"#e9bc64":"#e3e9e2",stroke:"#b6934d","stroke-width":.6});
+ const fs=Math.min(5,w/6,h/3);
+ add("text",{x:0,y:fs/3,"font-size":fs,"text-anchor":"middle",fill:"white"},"Pfosten");
+ add("text",{x,y:y+2,"font-size":5,"text-anchor":"middle",fill:"#463921"},"LED");
+ add("path",{d:"M-3 0H3 M0 -3V3",stroke:"#fff","stroke-width":.45});
+ target.append(svg);
+ target.append(node("small","Draufsicht: +X rechts, +Y unten. LED exemplarisch 30 × 30 mm; Kurven nur schematisch, keine CAD-Tangenten."));
+ if(Math.abs(x)<w/2+s&&Math.abs(y)<h/2+s)target.append(node("p","Hinweis: LED und Pfosten überlappen in der Vorschau."));
+ if(v.manual_construction)target.append(node("p","Manuelle Sonderkonstruktion: Vorschau zeigt nur eine LED."));
+ const controlsBox=node("div");controlsBox.className="mt-2";
+ const presets=[["Mittig",0,h/2+s],["Linksbündig",-w/2+s,h/2+s],["Rechtsbündig",w/2-s,h/2+s],["Diagonal links",-w/2-s,h/2+s],["Diagonal rechts",w/2+s,h/2+s]];
+ for(const [label,px,py] of presets){const b=node("button",label);b.type="button";b.className="btn btn-sm btn-outline-secondary mr-1 mb-1";b.onclick=()=>{for(const [k,i] of controls){if(k==="led_x")i.value=px;if(k==="led_y")i.value=py;}suggest();};controlsBox.append(b);}
+ target.append(controlsBox);
+}
+
 function visualize(){
  const p=data.products.find(x=>x.name===el("select").value);
  const target=el("preview");target.replaceChildren();
- if(!p||p.visualizer_key!=="fence-light-standard")return;
+ if(!p)return;
  const v=Object.fromEntries(controls.map(([k,i])=>[k,i.type==="checkbox"?i.checked:i.value]));
+ if(p.visualizer_key==="fence-light-special"){specialPreview(target,v);return;}
+ if(p.visualizer_key!=="fence-light-standard")return;
  const ns="http://www.w3.org/2000/svg";
  const svg=document.createElementNS(ns,"svg");svg.setAttribute("viewBox","0 0 340 230");svg.style.width="100%";svg.setAttribute("role","img");svg.setAttribute("aria-label","Schematische Zaunleuchte");
  function add(tag,attrs,label){const n=document.createElementNS(ns,tag);for(const [k,val] of Object.entries(attrs))n.setAttribute(k,String(val));if(label)n.textContent=label;svg.append(n);}
@@ -35,10 +85,10 @@ function visualize(){
 }
 function suggest(){
  visualize();
- const p=data.products.find(x=>x.name===el('select').value);if(!p||p.visualizer_key!=='fence-light-standard')return;
+ const p=data.products.find(x=>x.name===el('select').value);if(!p||!['fence-light-standard','fence-light-special'].includes(p.visualizer_key))return;
  const v=Object.fromEntries(controls.map(([k,i])=>[k,i.type==='checkbox'?i.checked:i.value]));
  const color=colorCode(v.housing_colour);
- const name=['ZL','STD',v.light_position,'Ü'+v.overhang,'B'+v.hole_position,v.warm_filter?'WW':'NW',color].join('-');
+ const name=(p.visualizer_key==='fence-light-standard'?['ZL','STD',v.light_position,'Ü'+v.overhang,'B'+v.hole_position]:['ZL','SON',v.post_width+'x'+v.post_depth,({'Bounding Box':'BB','Gummiband':'GB','Konkav':'KA','Konvex':'KV'})[v.outer_contour]||'?', 'X'+v.led_x,'Y'+v.led_y,...(v.manual_construction?['MAN']:[])]).concat(v.warm_filter?'WW':'NW',color).join('-');
  if(!el('name').value||el('name').value===lastSuggestion)el('name').value=name;
  lastSuggestion=name;
 }
@@ -54,7 +104,7 @@ function render(){
    else{i.value=r.default_value??"";i.required=!!r.required_value;i.className="form-control mb-2";}
    if(r.parameter_key==="housing_colour"){const list=node("datalist");list.id="product-asa-colours";for(const c of data.colours){const o=node("option");o.value=c.value;o.label=c.label;list.append(o);}i.setAttribute("list",list.id);l.append(list);}l.append(i);el("fields").append(l);if(p.visualizer_key==="fence-light-standard"&&["overhang","hole_position"].includes(r.parameter_key)){const presets=node("div");presets.className="mb-2";for(const [value,title] of (r.parameter_key==="overhang"?[["17","Standard · 17 mm"],["0","Kurz · 0 mm"]]:[["0","Ohne"],["57","Camas · 57 mm"]])){const b=node("button",title);b.type="button";b.className="btn btn-sm btn-outline-secondary mr-2";b.onclick=()=>{i.value=value;suggest();};presets.append(b);}el("fields").append(presets);}controls.push([r.parameter_key,i]);i.addEventListener('input',suggest);i.addEventListener('change',suggest);
  }
- suggest();el("save").disabled=false;el("list").replaceChildren();
+ if(p.visualizer_key==="fence-light-special"){const y=controls.find(([k])=>k==="led_y")?.[1],h=controls.find(([k])=>k==="post_depth")?.[1];if(y&&h&&!y.value)y.value=Number(h.value)/2+LED_PREVIEW_SIZE/2;}suggest();el("save").disabled=false;el("list").replaceChildren();
  for(const c of data.configurations.filter(x=>x.product===p.name)){
    const b=node("div");b.className="border rounded p-3 mb-2";const a=node("a",c.configuration_name);a.href="/app/print-configuration/"+encodeURIComponent(c.name);b.append(a);
    let values;try{values=JSON.parse(c.parameter_values);}catch{values={};}
