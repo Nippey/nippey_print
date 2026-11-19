@@ -211,6 +211,30 @@
             }
             if(/^#[0-9a-f]{6}$/i.test(m.display_color||"")){const swatch=document.createElement("div");Object.assign(swatch.style,{width:"48px",height:"32px",backgroundColor:m.display_color,border:"1px solid #888",marginBottom:"12px"});card.append(swatch);}
             card.append(list);
+            if(m.status==="Active" && Number(m.qty)>0){
+                const panel=document.createElement("div"), open=document.createElement("button");
+                open.type="button";open.className="btn btn-primary w-100 mb-2";open.textContent="Verbrauch erfassen";
+                panel.className="border rounded p-3 mb-3";panel.hidden=new URLSearchParams(location.search).get("mode")!=="consume";
+                const field=(label,control)=>{const title=document.createElement("label");title.textContent=label;title.className="d-block";title.append(control);panel.append(title);control.className="form-control mb-2";return control;};
+                const grams=field("Verbrauch (g)",document.createElement("input"));grams.type="number";grams.min="0.001";grams.max=String(m.qty);grams.step="0.001";
+                const select=(label,options)=>{const s=field(label,document.createElement("select"));for(const [v,t] of options)s.add(new Option(t,v));return s;};
+                const purpose=select("Verwendungszweck",[["Production","Produktion"],["Development","Entwicklung"],["Private","Privat"],["Maintenance","Wartung"],["Other","Sonstiges"]]);
+                const outcome=select("Druckergebnis",[["Successful","Erfolgreich"],["Failed","Fehldruck"],["Support","Stützmaterial"],["Purge","Spülmaterial"],["Waste","Sonstiger Ausschuss"]]);
+                const note=field("Notiz / Auftragsreferenz (optional)",document.createElement("textarea"));note.maxLength=500;
+                const preview=document.createElement("p"),result=document.createElement("p"),save=document.createElement("button");result.setAttribute("role","status");
+                save.type="button";save.className="btn btn-success w-100";save.textContent="Verbrauch buchen";
+                const update=()=>{const g=grams.valueAsNumber;const valid=Number.isFinite(g)&&g>0&&g<=Number(m.qty)&&grams.checkValidity();save.disabled=!valid;preview.textContent=valid?"Neuer Restbestand: "+format(Number(m.qty)-g," g")+(m.estimated_value==null?"":" · Verbrauch geschätzt: "+format(g*Number(m.estimated_value)/Number(m.qty)," €")):"Bitte Verbrauchsmenge eingeben.";};
+                grams.addEventListener("input",update);open.addEventListener("click",()=>{panel.hidden=!panel.hidden;if(!panel.hidden)grams.focus();});
+                save.addEventListener("click",async()=>{if(save.disabled)return;for(const x of [grams,purpose,outcome,note,save,open])x.disabled=true;result.textContent="Buchung läuft …";
+                    try{
+                        if(!window.frappe?.csrf_token)throw Error("CSRF-Token fehlt");
+                        const r=await fetch("/api/method/nippey_print.filament.consume_spool",{method:"POST",credentials:"same-origin",cache:"no-store",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},body:JSON.stringify({label,grams:grams.value,expected_qty:m.qty,purpose:purpose.value,outcome:outcome.value,note:note.value})});
+                        const data=await r.json();if(!r.ok||!data.message?.stock_entry)throw Error("HTTP "+r.status);
+                        await showSpool();const msg=document.createElement("p");msg.className="text-success";msg.textContent="Verbrauch gebucht: "+data.message.stock_entry;card.prepend(msg);
+                    }catch(e){result.textContent="Buchung nicht bestätigt: "+e.message+". Bitte neu laden und Bestand prüfen.";}
+                });
+                panel.append(preview,save,result);card.append(open,panel);update();
+            }
             if(m.status==="Active" && m.qty!=null && m.tare!=null && Number(m.nominal)>0){
                 const panel=document.createElement("div"), button=document.createElement("button");
                 button.type="button";button.className="btn btn-primary w-100";button.textContent="Erneut wiegen";

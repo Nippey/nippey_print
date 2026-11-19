@@ -21,7 +21,7 @@
    for(const [name,rs] of [...groups].sort((a,b)=>a[0].localeCompare(b[0]))){
      if(name){list.append(node("h4",name,"mt-4"),node("p",rs.length+" Rollen · "+fmt(sum(rs),2)+" g"+(value(rs)==null?"":" · "+money(value(rs))),"text-muted small"));}
      for(const r of rs){
-       const a=node("a",null,"border rounded p-3 mb-2 d-flex align-items-center");a.href="/nippey-print?"+new URLSearchParams({label:r.label});a.style.gap="12px";a.style.color="inherit";a.style.textDecoration="none";
+       const a=node("a",null,"border rounded p-3 mb-2 d-flex align-items-center");a.href="/nippey-print?"+new URLSearchParams({label:r.label,...(new URLSearchParams(location.search).get("mode")==="consume"?{mode:"consume"}:{})});a.style.gap="12px";a.style.color="inherit";a.style.textDecoration="none";
        const sw=node("span");Object.assign(sw.style,{width:"40px",height:"40px",flexShrink:"0",border:"1px solid #888",borderRadius:"8px",background:/^#[0-9a-f]{6}$/i.test(r.display_color||"")?r.display_color:"#aaa"});
        const body=node("div");body.style.flex="1";body.append(node("strong",r.colour||r.item),node("div",[r.material,r.manufacturer,r.label,r.ral?"RAL "+r.ral:""].filter(Boolean).join(" · "),"small text-muted"));
        const pct=Number(r.nominal)>0?100*Number(r.qty)/Number(r.nominal):null;

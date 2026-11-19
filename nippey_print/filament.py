@@ -283,3 +283,39 @@ def inventory_overview():
             break
         start += len(tags)
     return {"warehouse": settings.warehouse, "rows": rows}
+
+
+@frappe.whitelist(methods=["POST"])
+def consume_spool(label, grams, expected_qty, purpose, outcome, note=""):
+    import math
+    grams, expected_qty = float(grams), float(expected_qty)
+    note = str(note or "").strip()
+    if not all(math.isfinite(x) for x in (grams, expected_qty)) or grams <= 0 or abs(grams-round(grams,3))>1e-8:
+        frappe.throw("Invalid consumption quantity")
+    if purpose not in ("Production","Development","Private","Maintenance","Other") or outcome not in ("Successful","Failed","Support","Purge","Waste"):
+        frappe.throw("Invalid consumption classification")
+    if len(note)>500:
+        frappe.throw("Note too long")
+    tag=frappe.get_doc("Filament Label", label)
+    tag.check_permission("write")
+    frappe.db.sql("select name from `tabFilament Label` where name=%s for update",(label,))
+    tag.reload()
+    if tag.status!="Active" or not tag.batch:
+        frappe.throw("Only active spools can be used")
+    details=spool_details(label)
+    qty=float(details["qty"])
+    if abs(qty-expected_qty)>0.0005 or grams>qty:
+        frappe.throw("Stock changed or insufficient material. Reload.")
+    settings=frappe.get_single("Nippey Print Settings")
+    if frappe.db.get_value("Company",settings.company,"enable_perpetual_inventory"):
+        frappe.throw("This workflow requires non-perpetual inventory")
+    entry=frappe.get_doc(dict(doctype="Stock Entry",company=settings.company,
+        stock_entry_type="Material Issue",purpose="Material Issue",
+        custom_np_consumption_label=tag.name,custom_np_consumption_purpose=purpose,
+        custom_np_consumption_outcome=outcome,
+        remarks="Filament consumption: "+tag.name+" | "+purpose+" | "+outcome+" | "+note,
+        items=[dict(item_code=details["item"],s_warehouse=settings.warehouse,qty=grams,
+            uom="Gram",stock_uom="Gram",conversion_factor=1,use_serial_batch_fields=1,batch_no=tag.batch)]))
+    entry.insert()
+    entry.submit()
+    return {"stock_entry":entry.name,"qty":round(qty-grams,3),"consumed":grams,"cost":entry.items[0].amount}
