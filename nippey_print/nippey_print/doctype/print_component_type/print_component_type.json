@@ -1,0 +1,54 @@
+{
+  "doctype": "DocType",
+  "name": "Print Component Type",
+  "module": "Nippey Print",
+  "autoname": "format:NP-CT-{#####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "field_order": [
+    "type_name",
+    "code_prefix",
+    "product",
+    "inherited_parameters",
+    "description"
+  ],
+  "fields": [
+    {
+      "fieldname": "type_name",
+      "label": "Type Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "code_prefix",
+      "label": "Code Prefix",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "product",
+      "label": "Product",
+      "fieldtype": "Link",
+      "options": "Print Product",
+      "reqd": 1
+    },
+    {
+      "fieldname": "inherited_parameters",
+      "label": "Inherited Geometry Parameters",
+      "fieldtype": "Table",
+      "options": "Print Component Parameter"
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "engine": "InnoDB"
+}

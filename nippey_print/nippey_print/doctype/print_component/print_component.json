@@ -1,0 +1,73 @@
+{
+  "doctype": "DocType",
+  "name": "Print Component",
+  "module": "Nippey Print",
+  "autoname": "format:NP-C-{#####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "field_order": [
+    "component_type",
+    "component_code",
+    "source_configuration",
+    "geometry_parameters",
+    "geometry_signature",
+    "item",
+    "description"
+  ],
+  "fields": [
+    {
+      "fieldname": "component_type",
+      "label": "Component Type",
+      "fieldtype": "Link",
+      "options": "Print Component Type",
+      "reqd": 1
+    },
+    {
+      "fieldname": "component_code",
+      "label": "Component Code",
+      "fieldtype": "Data",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "source_configuration",
+      "label": "Source Configuration",
+      "fieldtype": "Link",
+      "options": "Print Configuration",
+      "reqd": 1
+    },
+    {
+      "fieldname": "geometry_parameters",
+      "label": "Geometry Parameters",
+      "fieldtype": "Code",
+      "read_only": 1,
+      "options": "JSON"
+    },
+    {
+      "fieldname": "geometry_signature",
+      "label": "Geometry Signature",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "item",
+      "label": "ERPNext Item",
+      "fieldtype": "Link",
+      "options": "Item",
+      "reqd": 0
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Small Text"
+    }
+  ],
+  "engine": "InnoDB"
+}

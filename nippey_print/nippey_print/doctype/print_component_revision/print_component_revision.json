@@ -1,0 +1,92 @@
+{
+  "doctype": "DocType",
+  "name": "Print Component Revision",
+  "module": "Nippey Print",
+  "autoname": "format:NP-CR-{#####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "field_order": [
+    "component",
+    "internal_revision",
+    "predecessor",
+    "export_date",
+    "change_description",
+    "historical_compatibility",
+    "status",
+    "profile",
+    "files",
+    "revision_signature"
+  ],
+  "fields": [
+    {
+      "fieldname": "component",
+      "label": "Component",
+      "fieldtype": "Link",
+      "options": "Print Component",
+      "reqd": 1
+    },
+    {
+      "fieldname": "internal_revision",
+      "label": "Internal Revision",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "predecessor",
+      "label": "Predecessor",
+      "fieldtype": "Link",
+      "options": "Print Component Revision",
+      "reqd": 0
+    },
+    {
+      "fieldname": "export_date",
+      "label": "Export Date",
+      "fieldtype": "Date"
+    },
+    {
+      "fieldname": "change_description",
+      "label": "Changes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "historical_compatibility",
+      "label": "Historical Compatibility Hint",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Draft\nReleased\nObsolete",
+      "default": "Draft",
+      "reqd": 1
+    },
+    {
+      "fieldname": "profile",
+      "label": "Print Profile",
+      "fieldtype": "Link",
+      "options": "Print Profile",
+      "reqd": 0
+    },
+    {
+      "fieldname": "files",
+      "label": "Model Files",
+      "fieldtype": "Table",
+      "options": "Print Model File"
+    },
+    {
+      "fieldname": "revision_signature",
+      "label": "Revision Signature",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "unique": 1
+    }
+  ],
+  "engine": "InnoDB"
+}

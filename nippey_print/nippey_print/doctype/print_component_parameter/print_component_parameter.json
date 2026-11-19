@@ -1,0 +1,18 @@
+{
+  "doctype": "DocType",
+  "name": "Print Component Parameter",
+  "module": "Nippey Print",
+  "istable": 1,
+  "field_order": [
+    "parameter_key"
+  ],
+  "fields": [
+    {
+      "fieldname": "parameter_key",
+      "label": "Parameter Key",
+      "fieldtype": "Data",
+      "reqd": 1
+    }
+  ],
+  "engine": "InnoDB"
+}

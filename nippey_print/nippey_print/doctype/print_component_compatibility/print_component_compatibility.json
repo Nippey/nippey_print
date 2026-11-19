@@ -1,0 +1,58 @@
+{
+  "doctype": "DocType",
+  "name": "Print Component Compatibility",
+  "module": "Nippey Print",
+  "autoname": "format:NP-CC-{#####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "field_order": [
+    "component_revision",
+    "model_revision",
+    "status",
+    "notes",
+    "compatibility_signature"
+  ],
+  "fields": [
+    {
+      "fieldname": "component_revision",
+      "label": "Component Revision",
+      "fieldtype": "Link",
+      "options": "Print Component Revision",
+      "reqd": 1
+    },
+    {
+      "fieldname": "model_revision",
+      "label": "Model Revision",
+      "fieldtype": "Link",
+      "options": "Print Model Revision",
+      "reqd": 1
+    },
+    {
+      "fieldname": "status",
+      "label": "Compatibility",
+      "fieldtype": "Select",
+      "options": "Unverified\nCompatible\nIncompatible",
+      "default": "Unverified",
+      "reqd": 1
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text"
+    },
+    {
+      "fieldname": "compatibility_signature",
+      "label": "Compatibility Signature",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "unique": 1
+    }
+  ],
+  "engine": "InnoDB"
+}
