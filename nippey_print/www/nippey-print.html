@@ -5,8 +5,8 @@
 <p id="status" role="status">Lade Stammdaten …</p>
 <p><a href="/nippey-print-labels">QR-Etiketten</a></p>
 <label for="manual-label">Rollennummer (oder QR-Code scannen)</label>
-<div class="input-group mb-2"><input id="manual-label" list="available-labels" autocomplete="off" class="form-control" placeholder="z. B. 12"><button id="choose-label" type="button" class="btn btn-secondary">Auswählen</button></div>
-<datalist id="available-labels"></datalist>
+<div class="input-group mb-2"><input id="manual-label" autocomplete="off" class="form-control" placeholder="z. B. 12"><button id="choose-label" type="button" class="btn btn-secondary">Auswählen</button></div>
+<div id="available-labels" class="list-group mb-2" aria-label="Verfügbare Rollennummern" hidden></div>
 <p id="label-info" role="status"></p>
 <form id="spool">
 {% for key, label in [('material','Material'),('manufacturer','Hersteller'),('colour','Farbe')] %}

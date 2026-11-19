@@ -92,28 +92,49 @@
     const label = new URLSearchParams(location.search).get("label");
     const manual=byId("manual-label");
     manual.value=label||"";
-    let searchSeq=0;
+    let searchSeq=0, matches=[];
+    const dropdown=byId("available-labels"), choose=byId("choose-label");
+    choose.disabled=true;
     async function suggestions(){
         const seq=++searchSeq;
+        matches=[]; choose.disabled=true;
+        dropdown.hidden=false;
+        dropdown.textContent="Suche …";
+        const query=manual.value.trim().toUpperCase();
         try {
-            const r=await fetch("/api/method/nippey_print.filament.available_labels?"+new URLSearchParams({query:manual.value}),{credentials:"same-origin"});
+            const r=await fetch("/api/method/nippey_print.filament.available_labels?"+new URLSearchParams({query}),{credentials:"same-origin"});
             if(!r.ok) throw Error("HTTP "+r.status);
             const {message}=await r.json();
-            if(seq===searchSeq) byId("available-labels").replaceChildren(...message.map(v=>new Option(v,v)));
-        } catch(e) { if(seq===searchSeq) byId("available-labels").replaceChildren(); }
+            if(seq!==searchSeq)return;
+            matches=message;
+            dropdown.replaceChildren();
+            const exact="ROLL-"+query.replace(/^ROLL-/,"").padStart(5,"0");
+            choose.disabled=!matches.includes(exact);
+            if(!matches.length)dropdown.textContent="Keine reservierte Rollennummer gefunden.";
+            for(const code of matches){
+                const b=document.createElement("button");
+                b.type="button"; b.className="list-group-item list-group-item-action";
+                b.textContent=code; b.addEventListener("click",()=>chooseLabel(code));
+                dropdown.append(b);
+            }
+        } catch(e) {
+            if(seq===searchSeq)dropdown.textContent="Suche fehlgeschlagen: "+e.message;
+        }
     }
     manual.addEventListener("focus",suggestions);
     manual.addEventListener("input",suggestions);
-    function chooseLabel(){
-        const q=manual.value.trim().toUpperCase();
-        if(!/^(ROLL-)?[0-9]{1,12}$/.test(q)) return;
-        const code="ROLL-"+q.replace(/^ROLL-/,"").padStart(5,"0");
+    function chooseLabel(code){
+        if(!matches.includes(code))return;
         if(code!==label && [...byId("spool").querySelectorAll("input")].some(e=>e.value && e.id!=="nominal" && e.id!=="color-picker") && !confirm("Rollennummer wechseln und bisherige Eingaben verwerfen?")) return;
         location.href="/nippey-print?"+new URLSearchParams({label:code});
     }
-    byId("choose-label").addEventListener("click",chooseLabel);
-    manual.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();chooseLabel();}});
-    manual.addEventListener("change",()=>{if([...byId("available-labels").options].some(o=>o.value===manual.value)) chooseLabel();});
+    function chooseExact(){
+        const q=manual.value.trim().toUpperCase();
+        if(!/^(ROLL-)?[0-9]{1,12}$/.test(q))return;
+        chooseLabel("ROLL-"+q.replace(/^ROLL-/,"").padStart(5,"0"));
+    }
+    choose.addEventListener("click",chooseExact);
+    manual.addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();chooseExact();}if(e.key==="Escape")dropdown.hidden=true;});
     const hex=byId("display-color"), picker=byId("color-picker");
     const sync=()=>{picker.value=/^#[0-9a-f]{6}$/i.test(hex.value)?hex.value:"#808080";calculate();};
     picker.addEventListener("input",()=>{hex.value=picker.value;calculate();});
