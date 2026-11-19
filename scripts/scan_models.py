@@ -31,10 +31,9 @@ def parse_name(stem):
             for token,pos in (("vorne","V"),("hinten","H"),("doppel","D")):
                 if token in low: result["light_position_hint"]=pos
             result["overhang_hint"]="0" if "simpel" in low else "17"
-            if "simpel" not in low: result["notes"]="Assumed standard overhang; verify"
         hole=re.search(r"(?:^|_)b(\d+(?:[.,]\d+)?)(?:mm)?(?=_|$)",low)
         if hole: result["hole_hint"]=hole[1].replace(",",".")
-        elif re.search(r"(?:^|_)kb(?=_|$)",low): result["hole_hint"]="0";result["notes"]=(result.get("notes","")+"; KB meaning to confirm").strip("; ")
+        else: result["hole_hint"]="0"
     for token,value in (("eckig","Bounding Box"),("gerade","Gummiband"),("konkav","Konkav"),("konvex","Konvex")):
         if token in low: result["contour_hint"]=value
     result["feature_hints"]=" | ".join(k for k in ("simpel","diagonal","dualled","ecke","seite","rechts","links","scheibe","nase","lang","eckig2") if k in low)
