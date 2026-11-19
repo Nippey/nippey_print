@@ -5,6 +5,33 @@
     const selected = () => formats.find(x => x.name === el("format").value);
     const status = text => { el("status").textContent = text; };
     const url = (method, args) => api + method + "?" + new URLSearchParams(args);
+    function preview(target, f, start, count, onPick, first=1) {
+        target.replaceChildren();
+        if(!f || !f.page_width || !f.page_height || !f.columns || !f.rows)return;
+        const cap=f.columns*f.rows;
+        if(!Number.isInteger(start)||start<1||start>cap||!Number.isInteger(count)||count<1)return;
+        const pages=Math.ceil((start-1+count)/cap);
+        if(pages>500)return;
+        const hint=document.createElement("p"); hint.className="small text-muted";
+        hint.textContent="Startposition auf dem ersten Bogen antippen. Grün = Druckbereich.";
+        target.append(hint);
+        for(let page=0;page<pages;page++){
+            const caption=document.createElement("p");caption.className="small mb-1";caption.textContent="Bogen "+(page+1)+" / "+pages;target.append(caption);
+            const paper=document.createElement("div");
+            Object.assign(paper.style,{position:"relative",width:"100%",maxWidth:"420px",aspectRatio:f.page_width+" / "+f.page_height,background:"#fff",border:"1px solid #aaa",marginBottom:"12px"});
+            for(let i=0;i<cap;i++){
+                const index=page*cap+i-start+1, printed=index>=0&&index<count;
+                const b=document.createElement("button");b.type="button";
+                b.textContent=printed?String(first+index):String(i+1);
+                b.title="Position "+(i+1)+(printed?" – Etikett "+(first+index):" – frei");
+                b.setAttribute("aria-label",b.title);
+                Object.assign(b.style,{position:"absolute",left:(100*(Number(f.margin_left)+(i%f.columns)*f.pitch_x)/f.page_width)+"%",top:(100*(Number(f.margin_top)+Math.floor(i/f.columns)*f.pitch_y)/f.page_height)+"%",width:(100*f.label_width/f.page_width)+"%",height:(100*f.label_height/f.page_height)+"%",background:printed?"#c3e6cc":"#eee",color:printed?"#245738":"#666",border:page===0&&i===start-1?"2px solid #25834c":"1px solid #bbb",borderRadius:"2px",fontSize:"10px",padding:"0",overflow:"hidden"});
+                if(page===0)b.addEventListener("click",()=>onPick(i+1));else b.disabled=true;
+                paper.append(b);
+            }
+            target.append(paper);
+        }
+    }
     function sync(reset = false) {
         const f = selected();
         const capacity = f ? f.columns * f.rows : 0;
@@ -15,6 +42,7 @@
         if (reset || Number(el("count").value) > remaining || !el("count").value) el("count").value = remaining;
         el("reserve").disabled = busy || !f || !f.verified;
         el("calibrate").disabled = busy || !f;
+        preview(el("preview"),f,Number(el("start").value),Number(el("count").value),pos=>{if(busy)return;el("start").value=pos;sync();});
     }
     async function load() {
         const response = await fetch(api + "get_print_options", {credentials:"same-origin"});
@@ -34,6 +62,7 @@
     }
     el("format").addEventListener("change", () => sync(true));
     el("start").addEventListener("input", () => sync());
+    el("count").addEventListener("input", () => sync());
     el("calibrate").addEventListener("click", () => { location.href = url("calibration",{label_format:el("format").value}); });
     el("form").addEventListener("submit", async event => {
         event.preventDefault();
@@ -62,6 +91,7 @@
         el("reprint-count").max=source?source.label_count-first+1:0;
         const valid=!!source && !!f?.verified && start>=1 && start<=cap && first>=1 && count>=1 && first+count-1<=source.label_count && [start,first,count].every(Number.isInteger);
         el("reprint-download").disabled=!valid;
+        preview(el("reprint-preview"),f,start,source&&first+count-1<=source.label_count?count:0,pos=>{el("reprint-start").value=pos;reprintSync();},first);
         el("reprint-pages").textContent=valid?Math.ceil((start-1+count)/cap)+" Druckbogen – keine neuen IDs.":"Bitte bestätigtes Format und gültigen Bereich wählen.";
     }
     function openReprint(s){

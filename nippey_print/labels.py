@@ -73,7 +73,17 @@ def download_sheet(sheet):
         fields=["name", "position"], order_by="position asc", limit_page_length=MAX_LABELS)
     if len(labels) != doc.label_count:
         frappe.throw("Label sheet is incomplete or not accessible")
-    _render_labels(layout, labels, doc.name + ".pdf")
+    _render_labels(layout, labels, _filename(labels, doc.label_format, doc.name))
+
+
+def _filename(labels, label_format, sheet, reprint=False):
+    import re
+    first, last = labels[0].name, labels[-1].name
+    prefix, sep, tail = first.rpartition("-")
+    end_prefix, _, end_tail = last.rpartition("-")
+    span = first if first == last else first + "-" + (end_tail if sep and prefix == end_prefix else last)
+    safe = lambda value: re.sub(r"[^A-Za-z0-9_-]+", "-", value).strip("-")
+    return "_".join(map(safe, (span, label_format, sheet))) + ("_reprint" if reprint else "") + ".pdf"
 
 
 def _render_labels(layout, labels, filename):
@@ -119,7 +129,7 @@ def get_print_options():
     return {
         "default_format": settings.default_label_format,
         "formats": frappe.get_list("Print Label Format",
-            fields=["name", "columns", "rows", "verified"], limit_page_length=100),
+            fields=["name", "columns", "rows", "verified", *DIMENSIONS], limit_page_length=100),
         "sheets": frappe.get_list("Print Label Sheet",
             fields=["name", "label_format", "label_count"], order_by="creation desc",
             limit_page_length=100),
@@ -171,4 +181,5 @@ def reprint_sheet(sheet, label_format, start_position=1, first=1, count=None):
     layout["base_url"] = json.loads(doc.layout_snapshot)["base_url"]
     for index, label in enumerate(labels[first-1:first-1+count]):
         label.position = start+index
-    _render_labels(layout, labels[first-1:first-1+count], doc.name + "-reprint.pdf")
+    chosen = labels[first-1:first-1+count]
+    _render_labels(layout, chosen, _filename(chosen, fmt.name, doc.name, reprint=True))

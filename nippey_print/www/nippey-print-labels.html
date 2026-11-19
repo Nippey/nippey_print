@@ -11,6 +11,7 @@
 <input id="label-start" class="form-control mb-3" type="number" min="1" value="1" required>
 <label for="label-count">Anzahl Etiketten</label>
 <input id="label-count" class="form-control mb-3" type="number" min="1" required>
+<div id="label-preview" class="mb-3"></div>
 <button id="label-reserve" class="btn btn-primary" disabled>IDs reservieren</button>
 <button id="label-calibrate" class="btn btn-secondary" type="button" disabled>Kalibrierungsdruck</button>
 </form>
@@ -23,7 +24,7 @@
 <label for="label-reprint-start">Startposition auf Zielbogen</label><input id="label-reprint-start" type="number" min="1" value="1" class="form-control mb-2" required>
 <label for="label-reprint-first">Erstes Etikett (laufende Position im Originalbogen)</label><input id="label-reprint-first" type="number" min="1" value="1" class="form-control mb-2" required>
 <label for="label-reprint-count">Anzahl</label><input id="label-reprint-count" type="number" min="1" class="form-control mb-2" required>
-<p id="label-reprint-pages"></p><button id="label-reprint-download" class="btn btn-primary">PDF erzeugen</button>
+<p id="label-reprint-pages"></p><div id="label-reprint-preview" class="mb-3"></div><button id="label-reprint-download" class="btn btn-primary">PDF erzeugen</button>
 </form>
 </div>
 <script src="/assets/nippey_print/js/labels.js" defer></script>
