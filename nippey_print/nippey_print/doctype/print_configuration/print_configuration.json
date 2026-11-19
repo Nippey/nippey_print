@@ -1,0 +1,57 @@
+{
+  "doctype": "DocType",
+  "name": "Print Configuration",
+  "module": "Nippey Print",
+  "autoname": "format:NP-C-{#####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "field_order": [
+    "product",
+    "configuration_name",
+    "item",
+    "parameter_values",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "product",
+      "label": "Product",
+      "fieldtype": "Link",
+      "options": "Print Product",
+      "reqd": 1
+    },
+    {
+      "fieldname": "configuration_name",
+      "label": "Configuration Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "item",
+      "label": "ERPNext Item",
+      "fieldtype": "Link",
+      "options": "Item",
+      "reqd": 0
+    },
+    {
+      "fieldname": "parameter_values",
+      "label": "Parameter Values (JSON)",
+      "fieldtype": "Code",
+      "options": "JSON",
+      "reqd": 1
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text",
+      "reqd": 0
+    }
+  ],
+  "engine": "InnoDB"
+}

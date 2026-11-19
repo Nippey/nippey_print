@@ -1,0 +1,56 @@
+{
+  "doctype": "DocType",
+  "name": "Print Product",
+  "module": "Nippey Print",
+  "autoname": "format:NP-P-{#####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "field_order": [
+    "product_name",
+    "item",
+    "description",
+    "parameters",
+    "visualizer_key"
+  ],
+  "fields": [
+    {
+      "fieldname": "product_name",
+      "label": "Product Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "item",
+      "label": "ERPNext Item",
+      "fieldtype": "Link",
+      "options": "Item",
+      "reqd": 0
+    },
+    {
+      "fieldname": "description",
+      "label": "Description",
+      "fieldtype": "Small Text",
+      "reqd": 0
+    },
+    {
+      "fieldname": "parameters",
+      "label": "Parameters",
+      "fieldtype": "Table",
+      "options": "Print Product Parameter",
+      "reqd": 0
+    },
+    {
+      "fieldname": "visualizer_key",
+      "label": "Visualizer Key",
+      "fieldtype": "Data",
+      "reqd": 0
+    }
+  ],
+  "engine": "InnoDB"
+}

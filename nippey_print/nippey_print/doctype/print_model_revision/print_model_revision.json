@@ -1,0 +1,102 @@
+{
+  "doctype": "DocType",
+  "name": "Print Model Revision",
+  "module": "Nippey Print",
+  "autoname": "format:NP-MR-{#####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "field_order": [
+    "configuration",
+    "internal_revision",
+    "marked_revision",
+    "model_year",
+    "predecessor",
+    "export_date",
+    "change_description",
+    "status",
+    "profile",
+    "bom",
+    "files"
+  ],
+  "fields": [
+    {
+      "fieldname": "configuration",
+      "label": "Configuration",
+      "fieldtype": "Link",
+      "options": "Print Configuration",
+      "reqd": 1
+    },
+    {
+      "fieldname": "internal_revision",
+      "label": "Internal Revision",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "marked_revision",
+      "label": "Marked Revision",
+      "fieldtype": "Data",
+      "reqd": 0
+    },
+    {
+      "fieldname": "model_year",
+      "label": "Model Year",
+      "fieldtype": "Int",
+      "reqd": 0
+    },
+    {
+      "fieldname": "predecessor",
+      "label": "Predecessor",
+      "fieldtype": "Link",
+      "options": "Print Model Revision",
+      "reqd": 0
+    },
+    {
+      "fieldname": "export_date",
+      "label": "Export Date",
+      "fieldtype": "Date",
+      "reqd": 0
+    },
+    {
+      "fieldname": "change_description",
+      "label": "Changes",
+      "fieldtype": "Small Text",
+      "reqd": 0
+    },
+    {
+      "fieldname": "status",
+      "label": "Status",
+      "fieldtype": "Select",
+      "options": "Draft\nReleased\nObsolete",
+      "reqd": 1
+    },
+    {
+      "fieldname": "profile",
+      "label": "Print Profile",
+      "fieldtype": "Link",
+      "options": "Print Profile",
+      "reqd": 0
+    },
+    {
+      "fieldname": "bom",
+      "label": "BOM",
+      "fieldtype": "Link",
+      "options": "BOM",
+      "reqd": 0
+    },
+    {
+      "fieldname": "files",
+      "label": "Model Files",
+      "fieldtype": "Table",
+      "options": "Print Model File",
+      "reqd": 0
+    }
+  ],
+  "engine": "InnoDB"
+}

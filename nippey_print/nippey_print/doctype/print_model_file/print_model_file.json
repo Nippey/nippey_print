@@ -1,0 +1,34 @@
+{
+  "doctype": "DocType",
+  "name": "Print Model File",
+  "module": "Nippey Print",
+  "istable": 1,
+  "field_order": [
+    "file_role",
+    "file_attachment",
+    "sha256"
+  ],
+  "fields": [
+    {
+      "fieldname": "file_role",
+      "label": "File Role",
+      "fieldtype": "Select",
+      "options": "CAD\nSTL\n3MF\nOther",
+      "reqd": 1
+    },
+    {
+      "fieldname": "file_attachment",
+      "label": "File",
+      "fieldtype": "Attach",
+      "reqd": 1
+    },
+    {
+      "fieldname": "sha256",
+      "label": "SHA256",
+      "fieldtype": "Data",
+      "reqd": 0,
+      "read_only": 1
+    }
+  ],
+  "engine": "InnoDB"
+}

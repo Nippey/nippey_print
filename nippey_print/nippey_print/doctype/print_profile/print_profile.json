@@ -1,0 +1,54 @@
+{
+  "doctype": "DocType",
+  "name": "Print Profile",
+  "module": "Nippey Print",
+  "autoname": "format:NP-P-{#####}",
+  "permissions": [
+    {
+      "role": "System Manager",
+      "read": 1,
+      "write": 1,
+      "create": 1
+    }
+  ],
+  "field_order": [
+    "profile_name",
+    "revision",
+    "slicer",
+    "profile_file",
+    "notes"
+  ],
+  "fields": [
+    {
+      "fieldname": "profile_name",
+      "label": "Profile Name",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "revision",
+      "label": "Revision",
+      "fieldtype": "Data",
+      "reqd": 1
+    },
+    {
+      "fieldname": "slicer",
+      "label": "Slicer",
+      "fieldtype": "Data",
+      "reqd": 0
+    },
+    {
+      "fieldname": "profile_file",
+      "label": "Profile File",
+      "fieldtype": "Attach",
+      "reqd": 0
+    },
+    {
+      "fieldname": "notes",
+      "label": "Notes",
+      "fieldtype": "Small Text",
+      "reqd": 0
+    }
+  ],
+  "engine": "InnoDB"
+}
