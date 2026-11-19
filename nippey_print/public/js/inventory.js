@@ -6,22 +6,27 @@
         for (const row of rows) select.add(new Option(row.label, row.value));
         if (id !== "material") select.add(new Option("+ Neu anlegen", "__new__"));
     };
-    let reserved = false, busy = false;
+    let reserved = false, busy = false, completed = false;
     function calculate() {
         const fields = ["nominal", "gross", "tare", "price"].map(byId);
         const [n,g,t,p] = fields.map(el => el.valueAsNumber);
         const valid = Number.isFinite(g) && Number.isFinite(t) && g >= t && t >= 0;
         byId("net").textContent = valid ? (g-t).toLocaleString("de-DE") + " g" : "–";
-        byId("save-spool").disabled = !reserved || busy || !valid || !(g>t && n>0 && g-t<=n*1.1 && Number.isFinite(p) && p>=0) || ["material","manufacturer","colour"].some(id=>!byId(id).value || byId(id).value==="__new__") || !byId("spool").checkValidity();
+        byId("save-spool").disabled = busy || completed;
         byId("worth").textContent = valid && n > 0 && p >= 0 ? ((g-t)*p/n).toLocaleString("de-DE",{style:"currency",currency:"EUR"}) : "–";
     }
     byId("spool").addEventListener("input", calculate);
-    byId("spool").addEventListener("submit", async event => {
+    async function save(event) {
         event.preventDefault();
-        calculate();
-        if (byId("save-spool").disabled) return;
-        busy=true; calculate();
         const result=byId("save-result");
+        if(busy || completed)return;
+        const fail=message=>{result.textContent=message;result.scrollIntoView({block:"nearest"});};
+        if(!reserved)return fail("Bitte eine reservierte Rollennummer auswählen oder den Etikettenstatus neu laden.");
+        if(["material","manufacturer","colour"].some(id=>!byId(id).value || byId(id).value==="__new__"))return fail("Bitte Material, Hersteller und Farbe auswählen.");
+        const [n,g,t,p]=["nominal","gross","tare","price"].map(id=>byId(id).valueAsNumber);
+        if(![n,g,t,p].every(Number.isFinite)||n<=0||t<0||g<=t||g-t>n*1.1||p<0)return fail("Bitte Gewichte und Einkaufspreis prüfen. Die Nettofüllmenge muss positiv sein und darf höchstens 110 % des Nenngewichts betragen.");
+        if(!byId("spool").reportValidity())return fail("Bitte die markierten Eingabefelder prüfen.");
+        busy=true; calculate();
         result.textContent="Lagerbuchung läuft …";
         try {
             if (!window.frappe?.csrf_token) throw Error("CSRF-Token fehlt");
@@ -42,7 +47,7 @@
             }
             const m=payload.message;
             if(!m?.stock_entry) throw Error("Keine Buchungsbestätigung");
-            reserved=false;
+            reserved=false; completed=true;
             byId("label-info").textContent=m.label+" – Aktiv / "+m.batch;
             result.textContent="Rolle erfolgreich erfasst.\nArtikel: "+m.item+"\nRestmenge: "+m.net+" g\nLagerbuchung: "+m.stock_entry;
             for(const el of byId("spool").querySelectorAll("input,select,button")) el.disabled=true;
@@ -50,7 +55,9 @@
             reserved=false;
             result.textContent="Buchung nicht bestätigt: "+e.message+"\nBitte Etikettenstatus durch erneutes Laden prüfen, bevor du erneut speicherst.";
         } finally {busy=false;calculate();}
-    });
+    }
+    byId("save-spool").addEventListener("click",save);
+    byId("spool").addEventListener("submit",save);
     fetch("/api/method/nippey_print.filament.get_options", {credentials:"same-origin",cache:"no-store"})
         .then(response => { if (!response.ok) throw Error("HTTP " + response.status); return response.json(); })
         .then(({message:m}) => {
