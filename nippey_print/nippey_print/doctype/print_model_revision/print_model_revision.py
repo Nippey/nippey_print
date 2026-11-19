@@ -28,7 +28,7 @@ class PrintModelRevision(Document):
             if not file_name: frappe.throw("Upload a local file first")
             file=frappe.get_doc("File",file_name)
             file.check_permission("read")
-            if file.is_remote_file: frappe.throw("Remote model files are not supported")
+            if not str(file.file_url or "").startswith(("/files/", "/private/files/")): frappe.throw("Remote model files are not supported")
             content=file.get_content()
             if isinstance(content,str): content=content.encode()
             row.sha256=hashlib.sha256(content).hexdigest()

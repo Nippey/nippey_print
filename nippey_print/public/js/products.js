@@ -92,6 +92,19 @@ function suggest(){
  if(!el('name').value||el('name').value===lastSuggestion)el('name').value=name;
  lastSuggestion=name;
 }
+function revisionPanel(config,revisions){
+ const panel=node("div");panel.className="border-top mt-2 pt-2";
+ const form=node("div");form.hidden=true;
+ const toggle=node("button","Neue Modellrevision");toggle.type="button";toggle.className="btn btn-sm btn-outline-primary";toggle.onclick=()=>{form.hidden=!form.hidden;};panel.append(toggle,form);
+ const inputs={};
+ for(const [key,label,type] of [["internal_revision","Interne Revision (z. B. V14.2)","text"],["marked_revision","Aufgedruckte Revision (z. B. V14)","text"],["model_year","Modelljahr","number"],["export_date","Exportdatum","date"],["change_description","Änderungen","textarea"]]){
+   const l=node("label",label);l.className="d-block mt-2";const i=node(type==="textarea"?"textarea":"input");if(type!=="textarea")i.type=type;i.className="form-control";l.append(i);form.append(l);inputs[key]=i;
+ }
+ const l=node("label","Vorgänger (optional)");l.className="d-block mt-2";const prev=node("select");prev.className="form-control";prev.add(new Option("Keiner / unbekannt",""));for(const r of revisions)prev.add(new Option(r.internal_revision+" · "+r.status,r.name));l.append(prev);form.append(l);
+ const save=node("button","Entwurf erstellen und Dateien zuordnen");save.type="button";save.className="btn btn-primary btn-sm mt-2";const status=node("p");status.setAttribute("role","status");
+ save.onclick=async()=>{if(!inputs.internal_revision.value.trim()){status.textContent="Interne Revision fehlt.";return;}save.disabled=true;try{if(!window.frappe?.csrf_token)throw Error("CSRF-Token fehlt");const body={configuration:config.name,predecessor:prev.value,...Object.fromEntries(Object.entries(inputs).map(([k,i])=>[k,i.value]))};const response=await fetch("/api/method/nippey_print.products.create_revision",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},body:JSON.stringify(body)});if(!response.ok)throw Error("HTTP "+response.status);const result=(await response.json()).message;window.location.href="/app/print-model-revision/"+encodeURIComponent(result.name);}catch(e){status.textContent="Nicht bestätigt: "+e.message;save.disabled=false;}};
+ form.append(save,status);panel.append(node("small"," Dateien werden anschließend im ERPNext-Revisionsformular hochgeladen."));return panel;
+}
 function render(){
  const p=data.products.find(x=>x.name===el("select").value);if(!p)return;
  el("description").textContent=p.description||"";el("fields").replaceChildren();controls=[];
@@ -111,6 +124,7 @@ function render(){
    b.append(node("p",Object.entries(values).map(([k,v])=>k+": "+v).join(" · ")));
    const same=new Set(data.configurations.filter(x=>x.geometry_signature===c.geometry_signature).map(x=>x.name));
    for(const r of data.revisions.filter(x=>same.has(x.configuration))){const link=node("a",r.internal_revision+" · "+r.status);link.href="/app/print-model-revision/"+encodeURIComponent(r.name);const line=node("div");line.append(link);b.append(line);}
+   b.append(revisionPanel(c,data.revisions.filter(r=>same.has(r.configuration))));
    el("list").append(b);
  }
 }

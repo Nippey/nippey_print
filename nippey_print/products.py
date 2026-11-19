@@ -10,7 +10,7 @@ def overview():
         products.append(dict(name=d.name,title=d.product_name,description=d.description,visualizer_key=d.visualizer_key,
             parameters=[{k:r.get(k) for k in ("parameter_key","parameter_label","parameter_type","choices","default_value","required_value","unit")} for r in d.parameters]))
     configurations=frappe.get_list("Print Configuration",fields=["name","product","configuration_name","parameter_values","geometry_signature"],limit_page_length=0,order_by="modified desc")
-    revisions=frappe.get_list("Print Model Revision",fields=["name","configuration","internal_revision","status"],limit_page_length=0,order_by="modified desc")
+    revisions=frappe.get_list("Print Model Revision",fields=["name","configuration","internal_revision","marked_revision","model_year","export_date","predecessor","status"],limit_page_length=0,order_by="modified desc")
     colours={}
     for row in frappe.get_list("Item", filters={"variant_of":"FIL-ASA","disabled":0},
         fields=["name","custom_ral_code","custom_manufacturer_color_name","custom_display_color"],limit_page_length=0):
@@ -39,3 +39,13 @@ def create_configuration(product,configuration_name,parameter_values):
         return dict(name=existing,existing=True)
     doc.insert()
     return dict(name=doc.name,existing=False)
+
+@frappe.whitelist(methods=["POST"])
+def create_revision(configuration, internal_revision, marked_revision=None, model_year=None, export_date=None, predecessor=None, change_description=None):
+    doc=frappe.get_doc(dict(doctype="Print Model Revision", configuration=configuration,
+        internal_revision=internal_revision, marked_revision=marked_revision,
+        model_year=model_year or None, export_date=export_date or None,
+        predecessor=predecessor or None, change_description=change_description, status="Draft"))
+    doc.check_permission("create")
+    doc.insert()
+    return {"name":doc.name}
