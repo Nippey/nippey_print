@@ -22,7 +22,8 @@
     "status",
     "profile",
     "bom",
-    "files"
+    "files",
+    "revision_signature"
   ],
   "fields": [
     {
@@ -96,6 +97,13 @@
       "fieldtype": "Table",
       "options": "Print Model File",
       "reqd": 0
+    },
+    {
+      "fieldname": "revision_signature",
+      "label": "revision signature",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "unique": 1
     }
   ],
   "engine": "InnoDB"

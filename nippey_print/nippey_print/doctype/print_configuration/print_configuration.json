@@ -16,7 +16,9 @@
     "configuration_name",
     "item",
     "parameter_values",
-    "notes"
+    "notes",
+    "configuration_signature",
+    "geometry_signature"
   ],
   "fields": [
     {
@@ -51,6 +53,20 @@
       "label": "Notes",
       "fieldtype": "Small Text",
       "reqd": 0
+    },
+    {
+      "fieldname": "configuration_signature",
+      "label": "configuration signature",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "geometry_signature",
+      "label": "geometry signature",
+      "fieldtype": "Data",
+      "read_only": 1,
+      "unique": 0
     }
   ],
   "engine": "InnoDB"
