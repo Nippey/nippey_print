@@ -132,7 +132,7 @@
     manual.addEventListener("input",suggestions);
     function chooseLabel(code){
         if(!matches.includes(code))return;
-        if(code!==label && [...byId("spool").querySelectorAll("input")].some(e=>e.value && e.id!=="nominal" && e.id!=="color-picker") && !confirm("Rollennummer wechseln und bisherige Eingaben verwerfen?")) return;
+        if(code!==label && !completed && !byId("spool").hidden && [...byId("spool").querySelectorAll("input")].some(e=>e.value && e.id!=="nominal" && e.id!=="color-picker") && !confirm("Rollennummer wechseln und bisherige Eingaben verwerfen?")) return;
         location.href="/nippey-print?"+new URLSearchParams({label:code});
     }
     function chooseExact(){
@@ -198,8 +198,8 @@
                 button.type="button";button.className="btn btn-primary w-100";button.textContent="Erneut wiegen";
                 panel.hidden=true;panel.className="mt-3";
                 const weight=document.createElement("input"), reason=document.createElement("input"), result=document.createElement("p"), save=document.createElement("button");
-                weight.type="number";weight.step="any";weight.min="0";weight.className="form-control mb-2";weight.placeholder="Aktuelles Gesamtgewicht (g)";weight.setAttribute("aria-label",weight.placeholder);
-                reason.className="form-control mb-2";reason.placeholder="Grund der Bestandskorrektur";reason.setAttribute("aria-label",reason.placeholder);reason.maxLength=500;
+                weight.type="number";weight.step="any";weight.min="0";weight.className="form-control mb-2";weight.placeholder="Aktuelles Gesamtgewicht (g)";weight.setAttribute("aria-label",weight.placeholder);weight.value=String(Math.round((Number(m.qty)+Number(m.tare))*1000)/1000);
+                reason.className="form-control mb-2";reason.placeholder="Grund der Bestandskorrektur";reason.setAttribute("aria-label",reason.placeholder);reason.maxLength=500;reason.value="Inventur";
                 const preview=document.createElement("p");result.setAttribute("role","status");
                 save.type="button";save.className="btn btn-success w-100";save.textContent="Wiegung speichern";
                 function update(){
@@ -209,7 +209,7 @@
                     save.disabled=!valid||!reason.value.trim();
                 }
                 weight.addEventListener("input",update);reason.addEventListener("input",update);
-                button.addEventListener("click",()=>{panel.hidden=!panel.hidden;if(!panel.hidden)weight.focus();});
+                button.addEventListener("click",()=>{panel.hidden=!panel.hidden;if(!panel.hidden){weight.focus();weight.select();}});
                 save.addEventListener("click",async()=>{
                     if(save.disabled)return;save.disabled=true;weight.disabled=true;reason.disabled=true;result.textContent="Wiegung wird gespeichert …";
                     try{
