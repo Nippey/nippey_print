@@ -8,7 +8,18 @@
  const low=r=>Number(r.nominal)>0 && Number(r.qty)/Number(r.nominal)<.25;
  function render(){
    const q=el("search").value.trim().toLowerCase();
-   const selected=rows.filter(r=>keys.every(k=>!el(k).value||r[k]===el(k).value)&&(!el("low").checked||low(r))&&(!q||[r.label,r.item,r.material,r.manufacturer,r.colour,r.ral,r.manufacturer_color].some(v=>String(v??"").toLowerCase().includes(q)||("ral "+String(r.ral??"")).toLowerCase().includes(q))));
+   const base=rows.filter(r=>(!el("low").checked||low(r))&&(!q||[r.label,r.item,r.material,r.manufacturer,r.colour,r.ral,r.manufacturer_color,r.ral?"RAL "+r.ral:""].some(v=>String(v??"").toLowerCase().includes(q))));
+   const matches=(r,except)=>keys.every(k=>k===except||!el(k).value||r[k]===el(k).value);
+   for(const k of keys){
+     const candidates=base.filter(r=>matches(r,k));
+     const counts=new Map();
+     for(const r of candidates)counts.set(r[k],(counts.get(r[k])||0)+1);
+     for(const option of el(k).options){
+       const count=option.value?counts.get(option.value)||0:candidates.length;
+       option.textContent=(option.value||"Alle")+" ("+count+")";
+     }
+   }
+   const selected=base.filter(r=>matches(r));
    const sum=rs=>rs.reduce((a,r)=>a+Number(r.qty),0);
    const value=rs=>rs.some(r=>r.estimated_value==null)?null:rs.reduce((a,r)=>a+Number(r.estimated_value),0);
    el("count").textContent=selected.length;

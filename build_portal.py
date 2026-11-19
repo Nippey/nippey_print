@@ -11,6 +11,5 @@ for path in sorted(root.rglob("*")):
         digest.update(path.read_bytes())
 build = digest.hexdigest()[:12]
 version = re.search(r'__version__\s*=\s*["\']([^"\']+)["\']', (root / "__init__.py").read_text()).group(1)
-for name in ("nippey-print.html", "nippey-print-labels.html"):
-    path = root / "www" / name
+for path in sorted((root / "www").glob("nippey-print*.html")):
     path.write_text(path.read_text().replace("__PORTAL_BUILD__", build).replace("__PORTAL_VERSION__", version))
