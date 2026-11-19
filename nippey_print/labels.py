@@ -126,7 +126,10 @@ def _render_labels(layout, labels, filename):
 def get_print_options():
     settings = frappe.get_single("Nippey Print Settings")
     settings.check_permission("read")
+    frappe.has_permission("Filament Label", "read", throw=True)
+    current = frappe.db.get_value("Series", "ROLL-", "current") or 0
     return {
+        "next_roll": int(current) + 1,
         "default_format": settings.default_label_format,
         "formats": frappe.get_list("Print Label Format",
             fields=["name", "columns", "rows", "verified", *DIMENSIONS], limit_page_length=100),
@@ -183,3 +186,11 @@ def reprint_sheet(sheet, label_format, start_position=1, first=1, count=None):
         label.position = start+index
     chosen = labels[first-1:first-1+count]
     _render_labels(layout, chosen, _filename(chosen, fmt.name, doc.name, reprint=True))
+
+
+@frappe.whitelist(methods=["GET"])
+def sheet_labels(sheet):
+    doc = frappe.get_doc("Print Label Sheet", sheet)
+    doc.check_permission("read")
+    return frappe.get_list("Filament Label", filters={"label_sheet": sheet},
+        pluck="name", order_by="position asc", limit_page_length=MAX_LABELS)
