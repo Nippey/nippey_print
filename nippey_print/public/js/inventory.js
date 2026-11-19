@@ -30,7 +30,7 @@
             data.manufacturer_color=byId("manufacturer-color").value.trim();
             data.display_color=byId("display-color").value.trim();
             const response=await fetch("/api/method/nippey_print.filament.register_spool",{
-                method:"POST", credentials:"same-origin",
+                method:"POST", credentials:"same-origin",cache:"no-store",
                 headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},
                 body:JSON.stringify(data)
             });
@@ -51,7 +51,7 @@
             result.textContent="Buchung nicht bestätigt: "+e.message+"\nBitte Etikettenstatus durch erneutes Laden prüfen, bevor du erneut speicherst.";
         } finally {busy=false;calculate();}
     });
-    fetch("/api/method/nippey_print.filament.get_options", {credentials:"same-origin"})
+    fetch("/api/method/nippey_print.filament.get_options", {credentials:"same-origin",cache:"no-store"})
         .then(response => { if (!response.ok) throw Error("HTTP " + response.status); return response.json(); })
         .then(({message:m}) => {
             fill("material",m.materials.map(x=>({value:x.item_code,label:x.item_name})));
@@ -71,7 +71,7 @@
             try {
                 if (!window.frappe?.csrf_token) throw Error("CSRF-Token fehlt");
                 const response = await fetch("/api/method/nippey_print.filament.add_attribute_value", {
-                    method:"POST", credentials:"same-origin",
+                    method:"POST", credentials:"same-origin",cache:"no-store",
                     headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},
                     body:JSON.stringify({attribute:attr,value})
                 });
@@ -102,7 +102,7 @@
         dropdown.textContent="Suche …";
         const query=manual.value.trim().toUpperCase();
         try {
-            const r=await fetch("/api/method/nippey_print.filament.available_labels?"+new URLSearchParams({query}),{credentials:"same-origin"});
+            const r=await fetch("/api/method/nippey_print.filament.available_labels?"+new URLSearchParams({query}),{credentials:"same-origin",cache:"no-store"});
             if(!r.ok) throw Error("HTTP "+r.status);
             const {message}=await r.json();
             if(seq!==searchSeq)return;
@@ -149,7 +149,7 @@
         picker.value=fallback[args.colour.toLowerCase()]||"#808080";
         if(Object.values(args).some(v=>!v||v==="__new__"))return;
         try{
-            const r=await fetch("/api/method/nippey_print.filament.colour_metadata?"+new URLSearchParams(args),{credentials:"same-origin"});
+            const r=await fetch("/api/method/nippey_print.filament.colour_metadata?"+new URLSearchParams(args),{credentials:"same-origin",cache:"no-store"});
             if(!r.ok)return;
             const {message:m}=await r.json();
             if(seq!==metaSeq)return;
@@ -161,7 +161,7 @@
     for(const k of ["material","manufacturer","colour"])byId(k).addEventListener("change",metadata);
     if (label) {
         byId("label-info").textContent = "Prüfe Etikett …";
-        fetch("/api/method/nippey_print.filament.get_label?"+new URLSearchParams({label}),{credentials:"same-origin"})
+        fetch("/api/method/nippey_print.filament.get_label?"+new URLSearchParams({label}),{credentials:"same-origin",cache:"no-store"})
             .then(r=>{if(!r.ok) throw Error("HTTP "+r.status);return r.json();})
             .then(({message:m})=>{reserved=m.status==="Reserved" && !m.batch; calculate(); byId("label-info").textContent = m.name+" – "+({Reserved:"Reserviert",Active:"Aktiv",Empty:"Leer",Archived:"Archiviert"}[m.status]||m.status)+(m.batch?" / "+m.batch:"");})
             .catch(e=>{byId("label-info").textContent="Etikett nicht verfügbar: "+e.message;});

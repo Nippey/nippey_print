@@ -45,7 +45,7 @@
         preview(el("preview"),f,Number(el("start").value),Number(el("count").value),pos=>{if(busy)return;el("start").value=pos;sync();},Array.from({length:Math.max(0,Math.min(500,Number(el("count").value)||0))},(_,i)=>nextRoll===null?"–":"ROLL-"+String(nextRoll+i).padStart(5,"0")));
     }
     async function load() {
-        const response = await fetch(api + "get_print_options", {credentials:"same-origin"});
+        const response = await fetch(api + "get_print_options", {credentials:"same-origin",cache:"no-store"});
         if (!response.ok) throw Error("HTTP " + response.status);
         const {message: data} = await response.json();
         formats = data.formats;
@@ -72,7 +72,7 @@
         try {
             if (!window.frappe?.csrf_token) throw Error("CSRF-Token nicht verfügbar");
             const response = await fetch(api + "reserve_sheet", {
-                method:"POST", credentials:"same-origin",
+                method:"POST", credentials:"same-origin",cache:"no-store",
                 headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},
                 body:JSON.stringify({label_format:el("format").value,start_position:Number(el("start").value),label_count:Number(el("count").value)})
             });
@@ -108,7 +108,7 @@
         el("reprint-count").value=s.label_count;
         el("reprint-form").hidden=false; reprintSync();
         el("reprint-form").scrollIntoView({block:"nearest"});
-        try{const r=await fetch(url("sheet_labels",{sheet:s.name}),{credentials:"same-origin"});if(!r.ok)throw Error("HTTP "+r.status);const {message}=await r.json();if(seq!==sourceSeq)return;sourceIds=message;reprintSync();}catch(e){if(seq===sourceSeq)el("reprint-pages").textContent="Etiketten konnten nicht geladen werden: "+e.message;}
+        try{const r=await fetch(url("sheet_labels",{sheet:s.name}),{credentials:"same-origin",cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);const {message}=await r.json();if(seq!==sourceSeq)return;sourceIds=message;reprintSync();}catch(e){if(seq===sourceSeq)el("reprint-pages").textContent="Etiketten konnten nicht geladen werden: "+e.message;}
     }
     el("reprint-form").addEventListener("input",reprintSync);
     el("reprint-form").addEventListener("change",reprintSync);

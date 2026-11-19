@@ -27,5 +27,6 @@
 <p id="label-reprint-pages"></p><div id="label-reprint-preview" class="mb-3"></div><button id="label-reprint-download" class="btn btn-primary">PDF erzeugen</button>
 </form>
 </div>
-<script src="/assets/nippey_print/js/labels.js" defer></script>
+<script src="/assets/nippey_print/js/labels.js?v={{ asset_version }}" defer></script>
+<p class="text-center text-muted small">nippey.print {{ app_version }} · Build {{ build_id }}</p>
 {% endblock %}

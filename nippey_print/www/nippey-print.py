@@ -1,4 +1,5 @@
 import frappe
+from nippey_print.web_cache import prepare_page
 from urllib.parse import urlencode
 
 no_cache = 1
@@ -11,4 +12,5 @@ def get_context(context):
         raise frappe.Redirect
     frappe.has_permission("Item", "read", throw=True)
     context.no_cache = 1
+    prepare_page(context, "inventory.js")
     context.title = "Filamentinventur"
