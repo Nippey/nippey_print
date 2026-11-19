@@ -1,0 +1,1 @@
+# RAL Classic palette\n\nScreen approximation data adapted from pixelbrackets/ral-color-chart, src/RalColorChart.php, blob 52806b8a2f976324593d2ac5b9d594dbe46aacb1. Copyright Dan Kleine / pixelbrackets; GPL-2.0-or-later (distributed here under GPL-3.0). Source: https://github.com/pixelbrackets/ral-color-chart . RAL is a trademark; not official digital values.
