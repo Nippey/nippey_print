@@ -1,0 +1,67 @@
+<!doctype html><html lang="de"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Modellzuordnung</title><style>body{font:16px system-ui;max-width:1050px;margin:auto;padding:16px;color:#263238}label{display:block;margin:8px 0}input,select,button,textarea{font:inherit;padding:7px;max-width:100%;box-sizing:border-box}button{cursor:pointer}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:20px}canvas{width:100%;height:320px;background:#edf1f3;touch-action:none}small{display:block}textarea{width:100%}select{max-width:100%}</style><h1>Historische Modellzuordnung</h1><p>Lokale Prüfung: Keine Uploads, keine ERPNext-Schreibzugriffe. Zwischenstände als CSV exportieren.</p><label>Scanner-CSV oder Zwischenstand <input id="csv" type="file" accept=".csv"></label><label>STL-Verzeichnis (optional, Browser mit Ordnerauswahl) <input id="folder" type="file" webkitdirectory multiple></label><label>Datei <select id="file"></select></label><button id="prev">Zurück</button> <button id="next">Weiter</button> <span id="progress"></span><p id="hint"></p><main><section id="form"><label>Familie <select id="family"><option value="">Unbekannt</option><option value="STD">Standard</option><option value="SON">Sonder</option></select></label><div id="fields"></div><label>Komponentencode <input id="code"></label><label>Interne Revision (optional) <input id="revision"></label><label>Kompatibilität (historischer Hinweis) <input id="compat"></label><label>Notizen <textarea id="notes"></textarea></label><button id="approve">Zuordnung bestätigen</button> <button id="pending">Offen lassen</button><p id="status" role="status"></p></section><section><div id="preview"></div><canvas id="mesh" width="640" height="480"></canvas><small id="meshstatus">STL-Ordner auswählen. Ansicht durch Ziehen drehen.</small></section></main><button id="export">Zwischenstand als CSV exportieren</button><script>
+const $=id=>document.getElementById(id),node=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n};
+const LED_PREVIEW_SIZE=36;
+function specialPreview(target,v,applyPreset){
+ const w=Number(v.post_width),h=Number(v.post_depth),x=Number(v.led_x),y=Number(v.led_y);
+ if(!(w>0&&h>0)||v.led_x===""||v.led_y===""||![w,h,x,y].every(Number.isFinite)){
+   target.append(node("p","Pfostenmaße und LED-Mittelpunkt eingeben."));return;
+ }
+ const ns="http://www.w3.org/2000/svg",svg=document.createElementNS(ns,"svg"),s=LED_PREVIEW_SIZE/2;
+ const corners=(cx,cy,a,b,type)=>[[-a,-b],[a,-b],[a,b],[-a,b]].map(([dx,dy])=>({x:cx+dx,y:cy+dy,type}));
+ const post=corners(0,0,w/2,h/2,"post"),led=corners(x,y,s,s,"led"),all=[...post,...led];
+ const minX=Math.min(...all.map(p=>p.x)),maxX=Math.max(...all.map(p=>p.x)),minY=Math.min(...all.map(p=>p.y)),maxY=Math.max(...all.map(p=>p.y));
+ const pad=Math.max(w,h,maxX-minX,maxY-minY)*.22;
+ svg.setAttribute("viewBox",[minX-pad,minY-pad,maxX-minX+2*pad,maxY-minY+2*pad].join(" "));svg.style.width="100%";svg.style.maxHeight="350px";svg.setAttribute("role","img");svg.setAttribute("aria-label","Draufsicht Sonderanfertigung");
+ function add(tag,attrs,label){const n=document.createElementNS(ns,tag);for(const [k,val] of Object.entries(attrs))n.setAttribute(k,String(val));if(label)n.textContent=label;svg.append(n);return n;}
+ const cross=(a,b,c)=>(b.x-a.x)*(c.y-a.y)-(b.y-a.y)*(c.x-a.x);
+ const sorted=[...all].sort((a,b)=>a.x-b.x||a.y-b.y);
+ const half=ps=>{const out=[];for(const p of ps){while(out.length>1&&cross(out[out.length-2],out[out.length-1],p)<=0)out.pop();out.push(p);}return out.slice(0,-1);};
+ const hull=[...half(sorted),...half([...sorted].reverse())];
+ const style={fill:"#7896a5","fill-opacity":.3,stroke:"#7896a5","stroke-width":1.5,"vector-effect":"non-scaling-stroke"};
+ if(v.outer_contour==="Bounding Box")add("rect",{x:minX,y:minY,width:maxX-minX,height:maxY-minY,...style});
+ else{
+   let d="M"+hull[0].x+" "+hull[0].y;
+   for(let i=0;i<hull.length;i++){
+     const a=hull[i],b=hull[(i+1)%hull.length],dx=b.x-a.x,dy=b.y-a.y,n=Math.hypot(dx,dy)||1;
+     if(a.type!==b.type&&["Konkav","Konvex"].includes(v.outer_contour)){
+       const k=n*.20*(v.outer_contour==="Konkav"?1:-1);
+       d+=" Q"+((a.x+b.x)/2-dy/n*k)+" "+((a.y+b.y)/2+dx/n*k)+" "+b.x+" "+b.y;
+     }else d+=" L"+b.x+" "+b.y;
+   }
+   add("path",{d:d+" Z",...style});
+ }
+ add("rect",{x:-w/2,y:-h/2,width:w,height:h,fill:"#555e64",stroke:"#92999e","stroke-width":.6});
+ add("rect",{x:x-s,y:y-s,width:2*s,height:2*s,fill:v.warm_filter?"#e9bc64":"#e3e9e2",stroke:"#b6934d","stroke-width":.6});
+ const fs=Math.min(5,w/6,h/3);
+ add("text",{x:0,y:fs/3,"font-size":fs,"text-anchor":"middle",fill:"white"},"Pfosten");
+ add("text",{x,y:y+2,"font-size":5,"text-anchor":"middle",fill:"#463921"},"LED");
+ add("path",{d:"M-3 0H3 M0 -3V3",stroke:"#fff","stroke-width":.45});
+ target.append(svg);
+ target.append(node("small","Draufsicht: +X rechts, +Y unten. LED ca. 36 × 36 mm; Kurven nur schematisch, keine CAD-Tangenten."));
+ if(Math.abs(x)<w/2+s&&Math.abs(y)<h/2+s)target.append(node("p","Hinweis: LED und Pfosten überlappen in der Vorschau."));
+ if(v.manual_construction)target.append(node("p","Manuelle Sonderkonstruktion: Vorschau zeigt nur eine LED."));
+ const controlsBox=node("div");controlsBox.className="mt-2";
+ const presets=[["Mittig",0,h/2+s],["Linksbündig",-w/2+s,h/2+s],["Rechtsbündig",w/2-s,h/2+s],["Diagonal links",-w/2-s,h/2+s],["Diagonal rechts",w/2+s,h/2+s]];
+ for(const [label,px,py] of presets){const b=node("button",label);b.type="button";b.className="btn btn-sm btn-outline-secondary mr-1 mb-1";b.onclick=()=>{applyPreset(px,py);};controlsBox.append(b);}
+ target.append(controlsBox);
+}
+
+let rows=[],headers=[],index=0,localFiles=new Map(),controls={},triangles=[],angle=.5,tilt=.6,meshToken=0;
+const extra=['assignment_family','assignment_parameters','component_code','component_revision','component_compatibility','assignment_status','assignment_notes'];
+function parse(s){let a=[],r=[],v='',q=false;s=s.replace(/^\uFEFF/,'');for(let i=0;i<s.length;i++){let c=s[i];if(c==='"'){if(q&&s[i+1]==='"'){v+='"';i++}else q=!q}else if(!q&&c===';'){r.push(v);v=''}else if(!q&&(c==='\n'||c==='\r')){if(c==='\r'&&s[i+1]==='\n')i++;r.push(v);a.push(r);r=[];v=''}else v+=c}if(q)throw Error('Ungültige CSV');if(v||r.length){r.push(v);a.push(r)}return a}
+function current(){return rows[index]}
+function values(){return Object.fromEntries(Object.entries(controls).map(([k,i])=>[k,i.value]))}
+function fields(v={}){ $('fields').replaceChildren();controls={};let defs=$('family').value==='SON'?[['post_width','Pfostenbreite'],['post_depth','Pfostentiefe'],['outer_contour','Außenkontur',['','Bounding Box','Gummiband','Konkav','Konvex']],['led_x','LED X'],['led_y','LED Y']]:$('family').value==='STD'?[['light_position','LED-Position',['','V','H','D']],['overhang','Überstand'],['hole_position','Bohrung']]:[];for(const [k,label,opts] of defs){let l=node('label',label+' '),i=node(opts?'select':'input');if(opts)for(const o of opts)i.add(new Option(o,o));else{i.type='number';i.step='any'}i.value=v[k]??'';i.oninput=()=>suggest();controls[k]=i;l.append(i);$('fields').append(l)}}
+function suggest(){let v=values(),f=$('family').value,p=current()?.component==='Housing'?'ZL':'DIF',complete=Object.values(v).every(x=>x!=='');$('preview').replaceChildren();if(f==='SON'){specialPreview($('preview'),v,(x,y)=>{controls.led_x.value=x;controls.led_y.value=y;suggest()});}let code=complete&&f==='SON'?[p,f,v.post_width+'x'+v.post_depth,({'Bounding Box':'BB','Gummiband':'GB','Konkav':'KA','Konvex':'KV'})[v.outer_contour],'X'+v.led_x,'Y'+v.led_y].join('-'):complete&&f==='STD'?[p,f,v.light_position,'U'+v.overhang,'B'+v.hole_position].join('-'):'';$('code').value=code}
+function store(status){let r=current();if(!r)return;r.assignment_family=$('family').value;r.assignment_parameters=JSON.stringify(values());r.component_code=$('code').value;r.component_revision=$('revision').value;r.component_compatibility=$('compat').value;r.assignment_notes=$('notes').value;if(status)r.assignment_status=status;else if(r.assignment_status==='Confirmed')r.assignment_status='Review';refresh()}
+function refresh(){$('progress').textContent=(index+1)+' / '+rows.length+' · '+rows.filter(r=>r.assignment_status==='Confirmed').length+' bestätigt'}
+function show(i){if(!rows.length)return;index=Math.max(0,Math.min(rows.length-1,i));let r=current();$('file').value=index;$('hint').textContent=[r.relative_path,r.file_role,r.feature_hints,r.revision_hint].filter(Boolean).join(' · ');$('family').value=r.assignment_family||({Special:'SON',Standard:'STD'})[r.family_hint]||'';let v={post_width:r.post_width_hint,post_depth:r.post_depth_hint,outer_contour:r.contour_hint,light_position:r.light_position_hint,overhang:r.overhang_hint,hole_position:r.hole_hint};if(r.assignment_parameters)try{v=JSON.parse(r.assignment_parameters)}catch{}fields(v);suggest();if(r.component_code)$('code').value=r.component_code;$('revision').value=r.component_revision||'';$('compat').value=r.component_compatibility||r.compatibility_hint||(r.component==='Diffuser'?r.revision_hint:'')||'';$('notes').value=r.assignment_notes||'';$('status').textContent=r.assignment_status||'Offen';refresh();loadMesh(r)}
+$('csv').onchange=async()=>{try{let a=parse(await $('csv').files[0].text());headers=a.shift();if(!headers.includes('relative_path')||!headers.includes('sha256'))throw Error('Scanner-Spalten fehlen');rows=a.filter(r=>r.length===headers.length).map(r=>Object.fromEntries(headers.map((k,i)=>[k,r[i]])));$('file').replaceChildren(...rows.map((r,i)=>new Option(r.relative_path,i)));show(0)}catch(e){$('status').textContent=e.message}};
+$('family').onchange=()=>{fields(values());suggest();store()};$('form').addEventListener('input',()=>store());$('file').onchange=()=>{store(current()?.assignment_status);show(Number($('file').value))};$('prev').onclick=()=>{store(current()?.assignment_status);show(index-1)};$('next').onclick=()=>{store(current()?.assignment_status);show(index+1)};
+$('approve').onclick=()=>{if(!current()||!$('family').value||!$('code').value.trim()||!Object.values(values()).every(x=>x!=='')){ $('status').textContent='Geometrie und Code vervollständigen.';return}store('Confirmed');$('status').textContent='Bestätigt'};$('pending').onclick=()=>{store('Review');$('status').textContent='Offen'};
+$('export').onclick=()=>{if(!rows.length)return;store(current()?.assignment_status);let h=[...new Set([...headers,...extra])],quote=x=>'"'+String(x??'').replace(/"/g,'""')+'"',s='\uFEFF'+[h.map(quote).join(';'),...rows.map(r=>h.map(k=>quote(r[k])).join(';'))].join('\r\n'),a=node('a');a.href=URL.createObjectURL(new Blob([s],{type:'text/csv;charset=utf-8'}));a.download='model_assignments.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000)};
+$('folder').onchange=()=>{localFiles=new Map(Array.from($('folder').files).map(f=>[f.webkitRelativePath.split('/').slice(1).join('/'),f]));if(current())loadMesh(current())};
+async function loadMesh(r){let token=++meshToken;triangles=[];draw();let f=localFiles.get(r.relative_path);if(!f||!r.relative_path.toLowerCase().endsWith('.stl')){$('meshstatus').textContent='Keine lokale STL für diese Datei.';return}try{if(f.size>100*1024*1024)throw Error('STL zu groß für Vorschau');let b=await f.arrayBuffer();if(token!==meshToken)return;let d=new DataView(b),n=b.byteLength>=84?d.getUint32(80,true):0,t=[];if(n&&84+n*50===b.byteLength){for(let i=0;i<n;i+=Math.max(1,Math.ceil(n/12000))){let o=84+i*50+12;t.push([0,1,2].map(j=>[0,1,2].map(k=>d.getFloat32(o+j*12+k*4,true))))}}else{let m=[...new TextDecoder().decode(b).matchAll(/vertex\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)/gi)];for(let i=0;i+2<m.length;i+=3*Math.max(1,Math.ceil(m.length/36000)))t.push(m.slice(i,i+3).map(x=>x.slice(1).map(Number)))}triangles=t.filter(t=>t.flat().every(Number.isFinite));if(!triangles.length)throw Error('Keine Dreiecke erkannt');$('meshstatus').textContent='Vereinfachte STL-Vorschau · '+triangles.length+' Dreiecke';draw()}catch(e){if(token===meshToken)$('meshstatus').textContent=e.message}}
+function draw(){let c=$('mesh'),g=c.getContext('2d');g.clearRect(0,0,c.width,c.height);if(!triangles.length)return;let min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity];for(let t of triangles)for(let p of t)for(let k=0;k<3;k++){min[k]=Math.min(min[k],p[k]);max[k]=Math.max(max[k],p[k])}let center=min.map((x,k)=>(x+max[k])/2),scale=360/(Math.hypot(...max.map((x,k)=>x-min[k]))||1);let project=p=>{let [x,y,z]=p.map((v,k)=>v-center[k]),a=x*Math.cos(angle)-y*Math.sin(angle),b=x*Math.sin(angle)+y*Math.cos(angle);return [320+a*scale,240+(z*Math.cos(tilt)-b*Math.sin(tilt))*scale,b*Math.cos(tilt)+z*Math.sin(tilt)]};let ts=triangles.map(t=>t.map(project)).sort((a,b)=>a.reduce((s,p)=>s+p[2],0)-b.reduce((s,p)=>s+p[2],0));g.fillStyle='#a9c3cb';g.strokeStyle='#526c76';g.lineWidth=.35;for(let t of ts){g.beginPath();g.moveTo(...t[0].slice(0,2));for(let p of t.slice(1))g.lineTo(...p.slice(0,2));g.closePath();g.fill();g.stroke()}}
+let drag=null;$('mesh').onpointerdown=e=>{drag=[e.clientX,e.clientY];$('mesh').setPointerCapture(e.pointerId)};$('mesh').onpointermove=e=>{if(!drag)return;angle+=(e.clientX-drag[0])*.012;tilt+=(e.clientY-drag[1])*.012;drag=[e.clientX,e.clientY];draw()};$('mesh').onpointerup=$('mesh').onpointercancel=()=>drag=null;
+</script></html>
