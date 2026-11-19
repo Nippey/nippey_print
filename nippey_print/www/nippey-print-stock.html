@@ -1,0 +1,24 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<div class="container py-4" style="max-width:800px">
+<h2>Filamentlager</h2>
+<p><a href="/nippey-print">Rolle erfassen</a> · <a href="/nippey-print-labels">QR-Etiketten</a></p>
+<p id="stock-status" role="status">Lade Bestand …</p>
+<div class="d-flex flex-wrap border rounded p-3 mb-3" style="gap:24px">
+<div>Rollen<br><strong id="stock-count">–</strong></div>
+<div>Bestand<br><strong id="stock-weight">–</strong></div>
+<div>Restwert (geschätzt)<br><strong id="stock-value">–</strong></div>
+</div>
+<label for="stock-search">Suche</label><input id="stock-search" class="form-control mb-2" placeholder="Rollennummer, RAL, Farbe …">
+<div class="row">
+{% for key,label in [('material','Material'),('manufacturer','Hersteller'),('colour','Farbe')] %}
+<div class="col-sm-4 mb-2"><label for="stock-{{ key }}">{{ label }}</label><select id="stock-{{ key }}" class="form-control"></select></div>
+{% endfor %}
+</div>
+<label for="stock-group">Gruppierung</label><select id="stock-group" class="form-control mb-2"><option value="material">Material</option><option value="item">Artikelvariante</option><option value="none">Keine</option></select>
+<label><input type="checkbox" id="stock-low"> Nur niedriger Rollenbestand (unter 25 %)</label>
+<div id="stock-list" class="mt-3"></div>
+</div>
+<script src="/assets/nippey_print/js/stock.js?v=__PORTAL_BUILD__" defer></script>
+<p class="text-center text-muted small">nippey.print __PORTAL_VERSION__ · Build __PORTAL_BUILD__</p>
+{% endblock %}

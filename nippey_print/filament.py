@@ -263,3 +263,23 @@ def reweigh_spool(label, gross, expected_qty, reason):
     batch.custom_last_weighing=now_datetime()
     batch.save()
     return {"qty":net,"delta":delta,"stock_entry":entry.name if entry else None}
+
+
+@frappe.whitelist(methods=["GET"])
+def inventory_overview():
+    settings = frappe.get_single("Nippey Print Settings")
+    settings.check_permission("read")
+    frappe.has_permission("Stock Ledger Entry", "read", throw=True)
+    frappe.has_permission("Warehouse", "read", throw=True)
+    frappe.get_doc("Warehouse", settings.warehouse).check_permission("read")
+    rows = []
+    start = 0
+    while True:
+        tags = frappe.get_list("Filament Label", filters={"status": "Active", "batch": ["is", "set"]},
+            pluck="name", order_by="name asc", limit_start=start, limit_page_length=100)
+        for label in tags:
+            rows.append(spool_details(label))
+        if len(tags) < 100:
+            break
+        start += len(tags)
+    return {"warehouse": settings.warehouse, "rows": rows}
