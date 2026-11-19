@@ -9,7 +9,7 @@ function colorCode(value){
 }
 
 // Illustrative footprint only: actual LED dimensions and CAD tangencies are not known.
-const LED_PREVIEW_SIZE=30;
+const LED_PREVIEW_SIZE=36;
 function specialPreview(target,v){
  const w=Number(v.post_width),h=Number(v.post_depth),x=Number(v.led_x),y=Number(v.led_y);
  if(!(w>0&&h>0)||v.led_x===""||v.led_y===""||![w,h,x,y].every(Number.isFinite)){
@@ -46,7 +46,7 @@ function specialPreview(target,v){
  add("text",{x,y:y+2,"font-size":5,"text-anchor":"middle",fill:"#463921"},"LED");
  add("path",{d:"M-3 0H3 M0 -3V3",stroke:"#fff","stroke-width":.45});
  target.append(svg);
- target.append(node("small","Draufsicht: +X rechts, +Y unten. LED exemplarisch 30 × 30 mm; Kurven nur schematisch, keine CAD-Tangenten."));
+ target.append(node("small","Draufsicht: +X rechts, +Y unten. LED ca. 36 × 36 mm; Kurven nur schematisch, keine CAD-Tangenten."));
  if(Math.abs(x)<w/2+s&&Math.abs(y)<h/2+s)target.append(node("p","Hinweis: LED und Pfosten überlappen in der Vorschau."));
  if(v.manual_construction)target.append(node("p","Manuelle Sonderkonstruktion: Vorschau zeigt nur eine LED."));
  const controlsBox=node("div");controlsBox.className="mt-2";

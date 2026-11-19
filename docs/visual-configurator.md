@@ -13,4 +13,4 @@ Special posts: no screw-hole option; no semantic front/back/left/right. For a po
 Approved visual reference: [four outer contours](fence-light-contours.svg). The sketch illustrates the contour families, not exact tangent CAD curves or dimensions.
 
 ## Special preview implementation
-Coordinate origin at post center, +X right, +Y down. Preview assumes a provisional 30 mm square LED, not a measured dimension. Presets place it on the lower side or corners; coordinates remain freely editable. Quadratic curves illustrate contour families and are not exact tangent CAD construction. Manual variants display only one illustrative LED. Confirm the real LED footprint before using preset coordinates for manufacturing.
+Coordinate origin at post center, +X right, +Y down. Preview assumes an approximately 36 mm square LED, as specified by the product owner. Presets place it on the lower side or corners; coordinates remain freely editable. Quadratic curves illustrate contour families and are not exact tangent CAD construction. Manual variants display only one illustrative LED. The approximate footprint is suitable for visualization, not dimensional CAD verification.
