@@ -4,7 +4,7 @@
 <h2>nippey.print</h2><p>3D-Druck &amp; Fertigungsmanagement</p>
 <p><a href="/app">← ERPNext</a></p>
 <div class="row">
-{% for route,title,description in [('nippey-print-stock','Filamentlager','Bestände und Rollen'),('nippey-print','Rolle erfassen','QR-Etikett auswählen'),('nippey-print-stock?mode=consume','Verbrauch erfassen','Rolle auswählen und Verbrauch buchen'),('nippey-print-labels','QR-Etiketten','Erstellen und drucken'),('nippey-print-products','Druckprodukte','Konfigurationen und Modellrevisionen')] %}
+{% for route,title,description in [('nippey-print-stock','Filamentlager','Bestände und Rollen'),('nippey-print','Rolle erfassen','QR-Etikett auswählen'),('nippey-print-stock?mode=consume','Verbrauch erfassen','Rolle auswählen und Verbrauch buchen'),('nippey-print-labels','QR-Etiketten','Erstellen und drucken'),('nippey-print-products','Druckprodukte','Konfigurationen und Modellrevisionen'),('nippey-print-models','Modellmanager','STL-Dateien und Modellrevisionen')] %}
 <div class="col-6 mb-3"><a href="/{{ route }}" class="border rounded p-3 d-block h-100"><strong>{{ title }}</strong><div class="small text-muted">{{ description }}</div></a></div>
 {% endfor %}
 </div></div>

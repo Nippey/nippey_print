@@ -1,0 +1,15 @@
+{% extends "templates/web.html" %}
+{% block page_content %}
+<div class="container py-4" style="max-width:1000px">
+<h2>Modellmanager</h2><p><a href="/nippey-print-home">← nippey.print Startseite</a></p>
+<p id="model-summary">Lade Modellrevisionen …</p>
+<label for="model-revision">Vorhandene Gehäuserevision</label><select id="model-revision" class="form-control"></select>
+<div id="model-files" class="my-2"></div>
+<label for="model-local">Oder lokale STL-Datei öffnen (kein Upload)</label><input id="model-local" type="file" accept=".stl" class="form-control">
+<canvas id="model-mesh" width="640" height="480" style="width:100%;max-width:740px;background:#edf1f3;touch-action:none" class="mt-3"></canvas>
+<p id="model-status" role="status">Zum Drehen ziehen. Vereinfachte Vorschau.</p>
+<p class="text-muted">Komponentenverwaltung und Import folgen.</p>
+</div>
+<script defer src="/assets/nippey_print/js/model_manager.js?v=__PORTAL_BUILD__"></script>
+<p class="text-center text-muted small">nippey.print __PORTAL_VERSION__ · Build __PORTAL_BUILD__</p>
+{% endblock %}
