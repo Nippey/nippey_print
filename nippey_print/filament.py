@@ -165,3 +165,39 @@ def colour_metadata(material, manufacturer, colour):
     return {"display_color": item.get("custom_display_color"),
             "ral": item.get("custom_ral_code"),
             "manufacturer_color": item.get("custom_manufacturer_color_name")}
+
+
+@frappe.whitelist(methods=["GET"])
+def spool_details(label):
+    from erpnext.stock.doctype.batch.batch import get_batch_qty
+    tag = frappe.get_doc("Filament Label", label)
+    tag.check_permission("read")
+    if not tag.batch:
+        frappe.throw("Label has no batch")
+    batch = frappe.get_doc("Batch", tag.batch)
+    batch.check_permission("read")
+    item = frappe.get_doc("Item", batch.item)
+    item.check_permission("read")
+    settings = frappe.get_single("Nippey Print Settings")
+    settings.check_permission("read")
+    frappe.has_permission("Stock Ledger Entry", "read", throw=True)
+    qty = get_batch_qty(batch_no=batch.name, warehouse=settings.warehouse, item_code=item.name)
+    attrs = {r.attribute: r.attribute_value for r in item.attributes}
+    receipts = frappe.get_list("Stock Entry", filters={"company": settings.company,
+        "docstatus": 1, "remarks": "Filament opening inventory: " + tag.name},
+        pluck="name", limit_page_length=2)
+    rate = None
+    if len(receipts) == 1:
+        receipt = frappe.get_doc("Stock Entry", receipts[0])
+        receipt.check_permission("read")
+        lines = [r for r in receipt.items if r.item_code == item.name]
+        if len(lines) == 1:
+            rate = lines[0].basic_rate
+    return {"label": tag.name, "status": tag.status, "item": item.name,
+        "material": item.item_group, "manufacturer": attrs.get("Manufacturer"),
+        "colour": attrs.get("Colour"), "ral": item.get("custom_ral_code"),
+        "manufacturer_color": item.get("custom_manufacturer_color_name"),
+        "display_color": item.get("custom_display_color"), "warehouse": settings.warehouse,
+        "qty": qty, "estimated_value": float(qty)*float(rate) if rate is not None else None,
+        "nominal": batch.get("custom_nominal_weight"), "tare": batch.get("custom_spool_tare_weight"),
+        "gross": batch.get("custom_last_gross_weight"), "last_weighing": batch.get("custom_last_weighing")}

@@ -166,11 +166,29 @@
         }catch{}
     }
     for(const k of ["material","manufacturer","colour"])byId(k).addEventListener("change",metadata);
+    async function showSpool(){
+        const card=byId("spool-card"); card.hidden=false; byId("spool").hidden=true;
+        card.textContent="Rollendaten werden geladen …";
+        try{
+            const r=await fetch("/api/method/nippey_print.filament.spool_details?"+new URLSearchParams({label}),{credentials:"same-origin",cache:"no-store"});
+            if(!r.ok)throw Error("HTTP "+r.status);
+            const {message:m}=await r.json();
+            const format=(v,unit="")=>v==null?"–":Number(v).toLocaleString("de-DE",{maximumFractionDigits:2})+unit;
+            card.replaceChildren();
+            const title=document.createElement("h3");title.textContent=m.label;card.append(title);
+            const list=document.createElement("dl");
+            for(const [key,value] of [["Artikel",m.item],["Material",m.material],["Hersteller",m.manufacturer],["Farbe",m.colour],["Hersteller-Farbbezeichnung",m.manufacturer_color],["RAL",m.ral],["Lager",m.warehouse],["Restbestand",format(m.qty," g")],["Restwert (geschätzt)",format(m.estimated_value," €")],["Nenngewicht",format(m.nominal," g")],["Leerrollengewicht",format(m.tare," g")],["Letztes Bruttogewicht",format(m.gross," g")],["Letzte Wiegung",m.last_weighing]]){
+                const dt=document.createElement("dt"),dd=document.createElement("dd");dt.textContent=key;dd.textContent=value??"–";list.append(dt,dd);
+            }
+            if(/^#[0-9a-f]{6}$/i.test(m.display_color||"")){const swatch=document.createElement("div");Object.assign(swatch.style,{width:"48px",height:"32px",backgroundColor:m.display_color,border:"1px solid #888",marginBottom:"12px"});card.append(swatch);}
+            card.append(list);
+        }catch(e){card.textContent="Rollendaten konnten nicht geladen werden: "+e.message;}
+    }
     if (label) {
         byId("label-info").textContent = "Prüfe Etikett …";
         fetch("/api/method/nippey_print.filament.get_label?"+new URLSearchParams({label}),{credentials:"same-origin",cache:"no-store"})
             .then(r=>{if(!r.ok) throw Error("HTTP "+r.status);return r.json();})
-            .then(({message:m})=>{reserved=m.status==="Reserved" && !m.batch; calculate(); byId("label-info").textContent = m.name+" – "+({Reserved:"Reserviert",Active:"Aktiv",Empty:"Leer",Archived:"Archiviert"}[m.status]||m.status)+(m.batch?" / "+m.batch:"");})
+            .then(({message:m})=>{reserved=m.status==="Reserved" && !m.batch; calculate(); byId("label-info").textContent = m.name+" – "+({Reserved:"Reserviert",Active:"Aktiv",Empty:"Leer",Archived:"Archiviert"}[m.status]||m.status)+(m.batch?" / "+m.batch:"");if(m.batch)showSpool();})
             .catch(e=>{byId("label-info").textContent="Etikett nicht verfügbar: "+e.message;});
     }
     calculate();

@@ -8,6 +8,7 @@
 <div class="input-group mb-2"><input id="manual-label" autocomplete="off" class="form-control" placeholder="z. B. 12"><button id="choose-label" type="button" class="btn btn-secondary">Auswählen</button></div>
 <div id="available-labels" class="list-group mb-2" aria-label="Verfügbare Rollennummern" hidden></div>
 <p id="label-info" role="status"></p>
+<section id="spool-card" class="border rounded p-3 mb-3" hidden></section>
 <form id="spool">
 {% for key, label in [('material','Material'),('manufacturer','Hersteller'),('colour','Farbe')] %}
 <label for="{{ key }}">{{ label }}</label>
@@ -32,6 +33,6 @@
 <button id="save-spool" type="button" class="btn btn-primary w-100" disabled>Rolle erfassen</button>
 <p id="save-result" role="status" class="mt-3" style="white-space:pre-line"></p>
 </form></div>
-<script src="/assets/nippey_print/js/inventory.js?v=20261119-2" defer></script>
-<p class="text-center text-muted small">nippey.print {{ app_version }} · Build {{ build_id }}</p>
+<script src="/assets/nippey_print/js/inventory.js?v=__PORTAL_BUILD__" defer></script>
+<p class="text-center text-muted small">nippey.print __PORTAL_VERSION__ · Build __PORTAL_BUILD__</p>
 {% endblock %}
