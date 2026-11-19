@@ -26,7 +26,8 @@
 {% endfor %}
 <p>Restmenge: <strong id="net">–</strong></p>
 <p>Restwert: <strong id="worth">–</strong></p>
-<button class="btn btn-primary w-100" disabled>Rolle erfassen (noch nicht verfügbar)</button>
+<button id="save-spool" class="btn btn-primary w-100" disabled>Rolle erfassen</button>
+<p id="save-result" role="status" class="mt-3" style="white-space:pre-line"></p>
 </form></div>
 <script src="/assets/nippey_print/js/inventory.js" defer></script>
 {% endblock %}
