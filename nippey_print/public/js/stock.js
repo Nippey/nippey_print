@@ -39,7 +39,7 @@
        if(pct!=null){const track=node("div"),bar=node("div");Object.assign(track.style,{height:"8px",borderRadius:"8px",background:"#88888830",overflow:"hidden",margin:"8px 0"});Object.assign(bar.style,{height:"100%",width:Math.max(0,Math.min(100,pct))+"%",background:low(r)?"#d99a35":"#459a70"});track.append(bar);body.append(track);}
        body.append(node("div",fmt(r.qty,2)+" g"+(pct==null?"":" · "+fmt(pct)+" %")+(r.estimated_value==null?"":" · "+money(r.estimated_value)),"small"));
        if(low(r))body.append(node("div","Niedriger Rollenbestand","small text-warning"));
-       a.append(sw,body,node("span","›"));list.append(a);
+       a.append(sw,body,node("span","›"));const edit=node("a","Artikel / Farbe bearbeiten ↗","small d-inline-block mr-3");edit.href="/app/item/"+encodeURIComponent(r.item);edit.target="_blank";edit.rel="noopener";const tag=node("a","Rollenetikett ↗","small");tag.href="/app/filament-label/"+encodeURIComponent(r.label);tag.target="_blank";tag.rel="noopener";const wrap=node("div",null,"mb-3");wrap.append(a,edit,tag);list.append(wrap);
      }
    }
  }

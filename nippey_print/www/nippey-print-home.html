@@ -7,6 +7,6 @@
 {% for route,title,description in [('nippey-print-stock','Filamentlager','Bestände und Rollen'),('nippey-print','Rolle erfassen','QR-Etikett auswählen'),('nippey-print-stock?mode=consume','Verbrauch erfassen','Rolle auswählen und Verbrauch buchen'),('nippey-print-labels','QR-Etiketten','Erstellen und drucken'),('nippey-print-products','Druckprodukte','Konfigurationen und Modellrevisionen'),('nippey-print-models','Modellmanager','STL-Dateien und Modellrevisionen')] %}
 <div class="col-6 mb-3"><a href="/{{ route }}" class="border rounded p-3 d-block h-100"><strong>{{ title }}</strong><div class="small text-muted">{{ description }}</div></a></div>
 {% endfor %}
-</div></div>
+</div><hr><h4>Stammdaten / Master data</h4><p><a href="/app/item">Artikel / Item</a> · <a href="/app/item-attribute/Colour">Farbe / Colour</a> · <a href="/app/item-attribute/Manufacturer">Hersteller / Manufacturer</a> · <a href="/app/batch">Charge / Batch</a> · <a href="/app/print-product">Druckprodukt / Print Product</a> · <a href="/app/print-configuration">Konfiguration / Print Configuration</a> · <a href="/app/print-component-type">Komponententyp / Print Component Type</a></p><p><a href="https://github.com/Nippey/nippey_print/blob/develop/docs/user-guide.de.md">Anleitung (DE)</a> · <a href="https://github.com/Nippey/nippey_print/blob/develop/docs/user-guide.en.md">User guide (EN)</a></p></div>
 <p class="text-center text-muted small">nippey.print __PORTAL_VERSION__ · Build __PORTAL_BUILD__</p>
 {% endblock %}
