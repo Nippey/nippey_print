@@ -16,3 +16,6 @@ Stand: Entwicklungsversion. Beispiele sind illustrativ, keine Betriebsdaten. Die
 
 ## Offene Punkte
 Neuinstallation der Stammdaten aus völlig leerer Datenbank, besondere Namensvorlagen, Massenzuordnung, CAD-Automatisierung und vollständiger Fertigungsablauf sind noch nicht durchgehend getestet bzw. implementiert. Bei Korrekturen keine Signaturen oder Bestandsbuchungen direkt in der Datenbank ändern.
+
+## Schnellzugriffe
+Eine vorhandene Konfiguration über „Als Vorlage übernehmen“ in die Eingabemaske kopieren; Speichern legt eine neue Variante an oder findet ein Duplikat. Revisionslinks öffnen direkt die STL-Vorschau; Stammdaten bleiben separat erreichbar. Im Modellmanager sind Quellkonfigurationen alphabetisch sortiert. Eine lokale STL wird beim Anlegen einer Komponentenrevision privat hochgeladen. Im Abschnitt Kompatibilität können vorhandene Gehäuse- und Komponentenrevisionen paarweise verknüpft werden; standardmäßig ungeprüft.

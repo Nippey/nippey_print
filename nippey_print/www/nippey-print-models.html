@@ -5,7 +5,7 @@
 <p id="model-summary">Lade Modellrevisionen …</p>
 <label for="model-revision">Vorhandene Modellrevision</label><select id="model-revision" class="form-control"></select>
 <div id="model-files" class="my-2"></div>
-<label for="model-local">Oder lokale STL-Datei öffnen (kein Upload)</label><input id="model-local" type="file" accept=".stl" class="form-control">
+<label for="model-local">Lokale STL-Datei auswählen (Vorschau; Upload erst beim Speichern)</label><input id="model-local" type="file" accept=".stl" class="form-control">
 <canvas id="model-mesh" width="640" height="480" style="width:100%;max-width:740px;background:#edf1f3;touch-action:none" class="mt-3"></canvas>
 <p id="model-status" role="status">Zum Drehen ziehen. WebGL-Vorschau.</p>
 <hr><h3>Komponenten</h3>
@@ -22,7 +22,14 @@
 <p class="mt-2">Die oben ausgewählte lokale STL-Datei wird beim Speichern privat hochgeladen. Die Revision bleibt im Entwurf.</p>
 <button id="model-save" type="button" class="btn btn-primary" disabled>Komponentenrevision anlegen</button>
 <p id="model-save-status" role="status"></p>
-</div></div>
+</div>
+<hr><h3>Kompatibilität zuweisen</h3>
+<label for="model-assign-housing">Gehäuserevision</label><select id="model-assign-housing" class="form-control"></select>
+<label for="model-assign-component">Komponentenrevision</label><select id="model-assign-component" class="form-control"></select>
+<label for="model-assign-state">Kompatibilität</label><select id="model-assign-state" class="form-control"><option value="Unverified">Ungeprüft</option><option value="Compatible">Kompatibel</option><option value="Incompatible">Inkompatibel</option></select>
+<label for="model-assign-notes">Notizen</label><textarea id="model-assign-notes" class="form-control"></textarea>
+<button id="model-assign-save" type="button" class="btn btn-primary mt-2" disabled>Zuordnung speichern</button><p id="model-assign-status" role="status"></p>
+</div>
 <script defer src="/assets/nippey_print/js/model_manager.js?v=__PORTAL_BUILD__"></script>
 <p class="text-center text-muted small">nippey.print __PORTAL_VERSION__ · Build __PORTAL_BUILD__</p>
 {% endblock %}

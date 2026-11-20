@@ -121,9 +121,9 @@ function render(){
  for(const c of data.configurations.filter(x=>x.product===p.name)){
    const b=node("div");b.className="border rounded p-3 mb-2";const a=node("a",c.configuration_name);a.href="/app/print-configuration/"+encodeURIComponent(c.name);b.append(a);
    let values;try{values=JSON.parse(c.parameter_values);}catch{values={};}
-   b.append(node("p",Object.entries(values).map(([k,v])=>k+": "+v).join(" · ")));
+   b.append(node("p",Object.entries(values).map(([k,v])=>k+": "+v).join(" · ")));const copy=node("button","Als Vorlage übernehmen");copy.type="button";copy.className="btn btn-sm btn-outline-secondary mb-2";copy.onclick=()=>{for(const [key,input] of controls){if(!Object.prototype.hasOwnProperty.call(values,key))continue;const v=values[key];if(input.type==="checkbox")input.checked=[true,1,"1","true","True"].includes(v);else input.value=v??"";}el("name").value="";lastSuggestion="";suggest();el("form").scrollIntoView({behavior:"smooth",block:"start"});el("status").textContent="Vorlage übernommen – Änderungen als neue Konfiguration speichern.";};b.append(copy);
    const same=new Set(data.configurations.filter(x=>x.geometry_signature===c.geometry_signature).map(x=>x.name));
-   for(const r of data.revisions.filter(x=>same.has(x.configuration))){const link=node("a",r.internal_revision+" · "+r.status);link.href="/app/print-model-revision/"+encodeURIComponent(r.name);const line=node("div");line.append(link);b.append(line);}
+   for(const r of data.revisions.filter(x=>same.has(x.configuration))){const link=node("a",r.internal_revision+" · "+r.status);link.href="/nippey-print-models?revision="+encodeURIComponent(r.name);const edit=node("a"," · Stammdaten");edit.href="/app/print-model-revision/"+encodeURIComponent(r.name);edit.className="small";const line=node("div");line.append(link,edit);b.append(line);}
    b.append(revisionPanel(c,data.revisions.filter(r=>same.has(r.configuration))));
    el("list").append(b);
  }

@@ -16,3 +16,6 @@ Status: development version. Examples are illustrative, not business data.
 
 ## Open items
 Fresh database master data setup, specialized naming templates, bulk assignment, CAD automation and the end-to-end manufacturing workflow are not fully tested or implemented. Do not edit signatures or stock transactions directly in the database.
+
+## Shortcuts
+Copy an existing configuration into the form using the template button; saving creates a new variant or finds a duplicate. Revision links open the STL preview directly; master data remains separately accessible. Source configurations are sorted by name. A local STL is uploaded privately when creating a component revision. The compatibility section links existing housing and component revisions in pairs, unverified by default.

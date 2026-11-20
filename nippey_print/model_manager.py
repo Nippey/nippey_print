@@ -16,7 +16,7 @@ def overview():
             if not url.startswith(("/private/files/", "/files/")):
                 continue
             files.append(dict(file_role=entry.file_role, filename=PurePosixPath(url).name, url=url))
-        result.append(dict(name=doc.name, configuration_name=config.configuration_name,
+        result.append(dict(name=doc.name, kind="model", configuration_name=config.configuration_name,
             internal_revision=doc.internal_revision, status=doc.status, files=files))
     return result
 
@@ -29,6 +29,7 @@ def component_catalog():
         ("configurations", "Print Configuration", ["name", "configuration_name", "product"]),
     ):
         result[key] = frappe.get_list(doctype, fields=fields, limit_page_length=0)
+    result["compatibilities"] = frappe.get_list("Print Component Compatibility", fields=["name", "component_revision", "model_revision", "status", "notes"], limit_page_length=0)
     result["revisions"] = []
     for row in frappe.get_list("Print Component Revision", fields=["name"], limit_page_length=0):
         doc = frappe.get_doc("Print Component Revision", row.name)
@@ -36,7 +37,7 @@ def component_catalog():
         component = frappe.get_doc("Print Component", doc.component)
         if not component.has_permission("read"):
             continue
-        result["revisions"].append(dict(name=doc.name, configuration_name=component.component_code,
+        result["revisions"].append(dict(name=doc.name, kind="component", configuration_name=component.component_code,
             internal_revision=doc.internal_revision, status=doc.status, files=[
                 dict(file_role=r.file_role, filename=PurePosixPath(r.file_attachment).name, url=r.file_attachment)
                 for r in doc.files if (r.file_attachment or "").startswith(("/files/", "/private/files/"))]))
@@ -89,3 +90,21 @@ def create_component_revision(component_type, configuration, component_code, int
     revision.append("files", dict(file_role="STL", file_attachment=attachment.file_url))
     revision.save()
     return dict(name=revision.name, component=component.name, sha256=sha256(content).hexdigest())
+
+@frappe.whitelist(methods=["POST"])
+def assign_compatibility(component_revision, model_revision, status="Unverified", notes=""):
+    if status not in ("Unverified", "Compatible", "Incompatible"):
+        frappe.throw("Invalid compatibility status")
+    existing = frappe.db.get_value("Print Component Compatibility",
+        {"component_revision": component_revision, "model_revision": model_revision}, "name")
+    if existing:
+        doc = frappe.get_doc("Print Component Compatibility", existing)
+        doc.check_permission("write")
+        doc.status = status
+        doc.notes = notes
+        doc.save()
+    else:
+        doc = frappe.get_doc(dict(doctype="Print Component Compatibility",
+            component_revision=component_revision, model_revision=model_revision,
+            status=status, notes=notes)).insert()
+    return dict(name=doc.name)
