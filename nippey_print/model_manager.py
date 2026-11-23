@@ -17,7 +17,7 @@ def overview():
                 continue
             files.append(dict(file_role=entry.file_role, filename=PurePosixPath(url).name, url=url))
         result.append(dict(name=doc.name, kind="model", configuration_name=config.configuration_name,
-            internal_revision=doc.internal_revision, status=doc.status, files=files))
+            internal_revision=doc.internal_revision, status=doc.status, export_date=doc.export_date, files=files))
     return result
 
 @frappe.whitelist(methods=["GET"])
@@ -38,7 +38,7 @@ def component_catalog():
         if not component.has_permission("read"):
             continue
         result["revisions"].append(dict(name=doc.name, kind="component", configuration_name=component.component_code,
-            internal_revision=doc.internal_revision, status=doc.status, files=[
+            internal_revision=doc.internal_revision, status=doc.status, export_date=doc.export_date, files=[
                 dict(file_role=r.file_role, filename=PurePosixPath(r.file_attachment).name, url=r.file_attachment)
                 for r in doc.files if (r.file_attachment or "").startswith(("/files/", "/private/files/"))]))
     return result
