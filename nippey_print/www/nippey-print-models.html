@@ -6,7 +6,15 @@
 <label for="model-revision">Vorhandene Modellrevision</label><select id="model-revision" class="form-control"></select>
 <div id="model-files" class="my-2"></div>
 <label for="model-local">Lokale STL-Datei auswählen (Vorschau; Upload erst beim Speichern)</label><input id="model-local" type="file" accept=".stl" class="form-control">
-<canvas id="model-mesh" width="640" height="480" style="width:100%;max-width:740px;background:#edf1f3;touch-action:none" class="mt-3"></canvas>
+<div class="position-relative mt-3" style="max-width:740px">
+  <canvas id="model-mesh" width="640" height="480" style="display:block;width:100%;background:#edf1f3;touch-action:none"></canvas>
+  <div id="model-views" class="position-absolute d-flex flex-wrap m-1" style="top:0;left:0" role="group" aria-label="3D-Ansicht">
+    <button type="button" class="btn btn-light btn-sm border m-1 active" data-view="standard" aria-pressed="true">Standard</button>
+    <button type="button" class="btn btn-light btn-sm border m-1" data-view="top" aria-pressed="false">Oben</button>
+    <button type="button" class="btn btn-light btn-sm border m-1" data-view="side" aria-pressed="false">Seite</button>
+    <button type="button" class="btn btn-light btn-sm border m-1" data-view="front" aria-pressed="false">Vorne</button>
+  </div>
+</div>
 <p id="model-status" role="status">Zum Drehen ziehen. WebGL-Vorschau.</p>
 <hr><h3>Komponenten</h3>
 <p><a href="/app/print-component-type">Komponententypen verwalten</a> · <a href="/app/print-component-revision">Revisionen verwalten</a> · <a href="/app/print-component-compatibility">Kompatibilität verwalten</a></p>

@@ -1,4 +1,11 @@
-(()=>{const $=id=>document.getElementById('model-'+id),node=(tag,text)=>{let n=document.createElement(tag);if(text!=null)n.textContent=text;return n};let triangles=[],angle=.5,tilt=.6,token=0,records=[];
+(()=>{const $=id=>document.getElementById('model-'+id),node=(tag,text)=>{let n=document.createElement(tag);if(text!=null)n.textContent=text;return n};const views = {
+  standard: [.5, .6],
+  top: [0, 0],
+  side: [Math.PI / 2, Math.PI / 2],
+  front: [0, Math.PI / 2],
+};
+let [angle, tilt] = views.standard;
+let token=0,records=[];
 let gl=$('mesh').getContext('webgl'),program,buffer,vertexCount=0,center=[0,0,0],scale=1;
 function compareRevisions(a, b) {
   const options = { numeric: true };
@@ -7,7 +14,41 @@ function compareRevisions(a, b) {
 }
 function init(){if(!gl)throw Error('WebGL nicht verfügbar');if(program)return;function shader(type,source){let sh=gl.createShader(type);gl.shaderSource(sh,source);gl.compileShader(sh);if(!gl.getShaderParameter(sh,gl.COMPILE_STATUS))throw Error(gl.getShaderInfoLog(sh));return sh}let p=gl.createProgram();gl.attachShader(p,shader(gl.VERTEX_SHADER,'attribute vec3 pos; attribute vec3 normal; uniform vec3 center; uniform vec2 rot; uniform float scale; uniform float aspect; varying vec3 n; vec3 rotate(vec3 v){float a=cos(rot.x),b=sin(rot.x),c=cos(rot.y),d=sin(rot.y);vec3 q=vec3(a*v.x-b*v.y,b*v.x+a*v.y,v.z);return vec3(q.x,c*q.z-d*q.y,c*q.y+d*q.z);} void main(){vec3 q=rotate(pos-center)*scale;gl_Position=vec4(q.x*aspect,-q.y,-q.z,1.0);n=rotate(normal);}'));gl.attachShader(p,shader(gl.FRAGMENT_SHADER,'precision mediump float; varying vec3 n; void main(){float l=0.35+0.65*abs(dot(normalize(n),normalize(vec3(0.3,-0.5,1.0))));gl_FragColor=vec4(vec3(0.55,0.71,0.78)*l,1.0);}'));gl.linkProgram(p);if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(p));program=p;buffer=gl.createBuffer();gl.enable(gl.DEPTH_TEST);}
 function draw(){if(!gl)return;let c=$('mesh');gl.viewport(0,0,c.width,c.height);gl.clearColor(.93,.95,.96,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);if(!program||!vertexCount)return;gl.useProgram(program);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);for(let [name,offset] of [['pos',0],['normal',12]]){let a=gl.getAttribLocation(program,name);gl.enableVertexAttribArray(a);gl.vertexAttribPointer(a,3,gl.FLOAT,false,24,offset)}gl.uniform3fv(gl.getUniformLocation(program,'center'),center);gl.uniform2f(gl.getUniformLocation(program,'rot'),angle,tilt);gl.uniform1f(gl.getUniformLocation(program,'scale'),scale);gl.uniform1f(gl.getUniformLocation(program,'aspect'),c.height/c.width);gl.drawArrays(gl.TRIANGLES,0,vertexCount)}
-let drag=null;$('mesh').onpointerdown=e=>{drag=[e.clientX,e.clientY];$('mesh').setPointerCapture(e.pointerId)};$('mesh').onpointermove=e=>{if(!drag)return;angle+=(e.clientX-drag[0])*.012;tilt+=(e.clientY-drag[1])*.012;drag=[e.clientX,e.clientY];draw()};$('mesh').onpointerup=$('mesh').onpointercancel=()=>drag=null;
+const mesh = $('mesh');
+const viewButtons = $('views').querySelectorAll('button[data-view]');
+function markView(view) {
+  for (const button of viewButtons) {
+    const active = button.dataset.view === view;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-pressed', String(active));
+  }
+}
+for (const button of viewButtons) {
+  button.addEventListener('click', () => {
+    const view = button.dataset.view;
+    [angle, tilt] = views[view];
+    markView(view);
+    draw();
+  });
+}
+
+let drag = null;
+mesh.onpointerdown = event => {
+  drag = [event.clientX, event.clientY];
+  mesh.setPointerCapture(event.pointerId);
+};
+mesh.onpointermove = event => {
+  if (!drag) return;
+  const dx = event.clientX - drag[0];
+  const dy = event.clientY - drag[1];
+  if (!dx && !dy) return;
+  angle += dx * .012;
+  tilt += dy * .012;
+  drag = [event.clientX, event.clientY];
+  markView(null);
+  draw();
+};
+mesh.onpointerup = mesh.onpointercancel = () => { drag = null; };
 
 async function preview(file){let t=++token;vertexCount=0;draw();$('status').textContent='STL wird geladen …';try{init();if(file.size>100*1024*1024)throw Error('STL über 100 MB');let b=await file.arrayBuffer();if(t!==token)return;let d=new DataView(b),n=b.byteLength>=84?d.getUint32(80,true):0,binary=n>0&&84+n*50===b.byteLength;let min=[Infinity,Infinity,Infinity],max=[-Infinity,-Infinity,-Infinity],count=0;let data=new Float32Array((binary?n:Math.min(2100000,Math.ceil(b.byteLength/24)))*18);function add(p){if(!p.flat().every(Number.isFinite))return;if((count+1)*18>data.length)throw Error('STL überschreitet Vorschau-Speicherlimit');let a=p[1].map((x,k)=>x-p[0][k]),v=p[2].map((x,k)=>x-p[0][k]),normal=[a[1]*v[2]-a[2]*v[1],a[2]*v[0]-a[0]*v[2],a[0]*v[1]-a[1]*v[0]],len=Math.hypot(...normal)||1;normal=normal.map(x=>x/len);let o=count*18;for(let point of p){for(let k=0;k<3;k++){min[k]=Math.min(min[k],point[k]);max[k]=Math.max(max[k],point[k]);data[o+k]=point[k];data[o+3+k]=normal[k]}o+=6}count++}if(binary){for(let i=0;i<n;i++){let o=84+i*50+12;add([0,1,2].map(j=>[0,1,2].map(k=>d.getFloat32(o+j*12+k*4,true))))}}else{let re=/vertex\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)/gi,m,p=[],str=new TextDecoder().decode(b);while((m=re.exec(str))){p.push(m.slice(1).map(Number));if(p.length===3){add(p);p=[]}}}if(!count)throw Error('Keine gültigen STL-Dreiecke erkannt');center=min.map((x,k)=>(x+max[k])/2);scale=1.7/(Math.hypot(...max.map((x,k)=>x-min[k]))||1);gl.bindBuffer(gl.ARRAY_BUFFER,buffer);gl.bufferData(gl.ARRAY_BUFFER,data.subarray(0,count*18),gl.STATIC_DRAW);if(gl.getError()!==gl.NO_ERROR)throw Error('GPU-Speicher oder WebGL-Fehler');vertexCount=count*3;draw();$('status').textContent=count+' Dreiecke · Außenmaße (STL-Einheiten, üblicherweise mm): '+max.map((v,k)=>(v-min[k]).toFixed(2)).join(' × ')}catch(e){if(t===token)$('status').textContent=e.message}}
 $('local').onchange=()=>{let f=$('local').files[0];if(f)preview(f)};
