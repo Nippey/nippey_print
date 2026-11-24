@@ -1,6 +1,21 @@
 (()=>{
 const el=k=>document.getElementById("product-"+k), node=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
 let data,controls=[],lastSuggestion='';
+const parameterValues = () => Object.fromEntries(
+ controls.map(([key, input]) => [key, input.type === "checkbox" ? input.checked : input.value])
+);
+
+function rememberProductForm() {
+ if (!el("select").value) return;
+ const form = {
+   product: el("select").value,
+   name: el("name").value,
+   lastSuggestion,
+   values: parameterValues(),
+ };
+ history.replaceState({ ...history.state, nippeyPrintProductForm: form }, "");
+}
+
 const ralNames={"7016":"an","9005":"ts","9006":"wa"};
 function colorCode(value){
  const s=String(value||"").trim(),m=s.match(/^(?:RAL\s*)?(\d{4})(?:\s+(.*))?$/i);
@@ -105,7 +120,7 @@ function revisionPanel(config,revisions){
  save.onclick=async()=>{if(!inputs.internal_revision.value.trim()){status.textContent="Interne Revision fehlt.";return;}save.disabled=true;try{if(!window.frappe?.csrf_token)throw Error("CSRF-Token fehlt");const body={configuration:config.name,predecessor:prev.value,...Object.fromEntries(Object.entries(inputs).map(([k,i])=>[k,i.value]))};const response=await fetch("/api/method/nippey_print.products.create_revision",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},body:JSON.stringify(body)});if(!response.ok)throw Error("HTTP "+response.status);const result=(await response.json()).message;window.location.href="/app/print-model-revision/"+encodeURIComponent(result.name);}catch(e){status.textContent="Nicht bestätigt: "+e.message;save.disabled=false;}};
  form.append(save,status);panel.append(node("small"," Dateien werden anschließend im ERPNext-Revisionsformular hochgeladen."));return panel;
 }
-function render(){
+function render(savedForm){
  const p=data.products.find(x=>x.name===el("select").value);if(!p)return;
  el("description").textContent=p.description||"";el("fields").replaceChildren();controls=[];
  for(const r of p.parameters){
@@ -117,7 +132,20 @@ function render(){
    else{i.value=r.default_value??"";i.required=!!r.required_value;i.className="form-control mb-2";}
    if(r.parameter_key==="housing_colour"){const list=node("datalist");list.id="product-asa-colours";for(const c of data.colours){const o=node("option");o.value=c.value;o.label=c.label;list.append(o);}i.setAttribute("list",list.id);l.append(list);}l.append(i);el("fields").append(l);if(p.visualizer_key==="fence-light-standard"&&["overhang","hole_position"].includes(r.parameter_key)){const presets=node("div");presets.className="mb-2";for(const [value,title] of (r.parameter_key==="overhang"?[["17","Standard · 17 mm"],["0","Kurz · 0 mm"]]:[["0","Ohne"],["57","Camas · 57 mm"]])){const b=node("button",title);b.type="button";b.className="btn btn-sm btn-outline-secondary mr-2";b.onclick=()=>{i.value=value;suggest();};presets.append(b);}el("fields").append(presets);}controls.push([r.parameter_key,i]);i.addEventListener('input',suggest);i.addEventListener('change',suggest);
  }
- if(p.visualizer_key==="fence-light-special"){const y=controls.find(([k])=>k==="led_y")?.[1],h=controls.find(([k])=>k==="post_depth")?.[1];if(y&&h&&!y.value)y.value=Number(h.value)/2+LED_PREVIEW_SIZE/2;}suggest();el("save").disabled=false;el("list").replaceChildren();
+ if(p.visualizer_key==="fence-light-special"){const y=controls.find(([k])=>k==="led_y")?.[1],h=controls.find(([k])=>k==="post_depth")?.[1];if(y&&h&&!y.value)y.value=Number(h.value)/2+LED_PREVIEW_SIZE/2;}
+ if (savedForm?.product === p.name) {
+   for (const [key, input] of controls) {
+     if (!Object.hasOwn(savedForm.values, key)) continue;
+     const value = savedForm.values[key];
+     if (input.type === "checkbox") input.checked = value === true;
+     else if (input.tagName !== "SELECT" || Array.from(input.options).some(option => option.value === value)) {
+       input.value = value;
+     }
+   }
+   el("name").value = savedForm.name;
+   lastSuggestion = savedForm.lastSuggestion;
+ }
+ suggest();el("save").disabled=false;el("list").replaceChildren();
  for(const c of data.configurations.filter(x=>x.product===p.name)){
    const b=node("div");b.className="border rounded p-3 mb-2";const a=node("a",c.configuration_name);a.href="/app/print-configuration/"+encodeURIComponent(c.name);b.append(a);
    let values;try{values=JSON.parse(c.parameter_values);}catch{values={};}
@@ -128,8 +156,9 @@ function render(){
    el("list").append(b);
  }
 }
-async function load(){const r=await fetch("/api/method/nippey_print.products.overview",{credentials:"same-origin",cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);data=(await r.json()).message;const previous=el("select").value;el("select").replaceChildren(...data.products.map(p=>new Option(p.title,p.name)));if(data.products.some(p=>p.name===previous))el("select").value=previous;render();}
+async function load(){if(data)rememberProductForm();const r=await fetch("/api/method/nippey_print.products.overview",{credentials:"same-origin",cache:"no-store"});if(!r.ok)throw Error("HTTP "+r.status);data=(await r.json()).message;const savedForm=history.state?.nippeyPrintProductForm;const previous=savedForm?.product ?? el("select").value;el("select").replaceChildren(...data.products.map(p=>new Option(p.title,p.name)));if(data.products.some(p=>p.name===previous))el("select").value=previous;render(savedForm);}
 el("select").onchange=()=>{if(el("name").value===lastSuggestion)el("name").value="";lastSuggestion="";render();};
-el("form").onsubmit=async e=>{e.preventDefault();el("save").disabled=true;try{if(!window.frappe?.csrf_token)throw Error("CSRF-Token fehlt");const values=Object.fromEntries(controls.map(([k,i])=>[k,i.type==="checkbox"?i.checked:i.value]));const r=await fetch("/api/method/nippey_print.products.create_configuration",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},body:JSON.stringify({product:el("select").value,configuration_name:el("name").value,parameter_values:values})});if(!r.ok)throw Error("HTTP "+r.status);const m=(await r.json()).message;await load();el("status").textContent=(m.existing?"Bereits vorhanden: ":"Gespeichert: ")+m.name;}catch(e){el("status").textContent="Nicht bestätigt: "+e.message;el("save").disabled=false;}};
+window.addEventListener("pagehide", rememberProductForm);
+el("form").onsubmit=async e=>{e.preventDefault();el("save").disabled=true;try{if(!window.frappe?.csrf_token)throw Error("CSRF-Token fehlt");const values=parameterValues();const r=await fetch("/api/method/nippey_print.products.create_configuration",{method:"POST",credentials:"same-origin",headers:{"Content-Type":"application/json","X-Frappe-CSRF-Token":frappe.csrf_token},body:JSON.stringify({product:el("select").value,configuration_name:el("name").value,parameter_values:values})});if(!r.ok)throw Error("HTTP "+r.status);const m=(await r.json()).message;await load();el("status").textContent=(m.existing?"Bereits vorhanden: ":"Gespeichert: ")+m.name;}catch(e){el("status").textContent="Nicht bestätigt: "+e.message;el("save").disabled=false;}};
 load().then(()=>el("status").textContent="Produkte geladen.").catch(e=>el("status").textContent=e.message);
 })();

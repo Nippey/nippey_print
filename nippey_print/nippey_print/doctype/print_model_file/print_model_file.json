@@ -14,13 +14,15 @@
       "label": "File Role",
       "fieldtype": "Select",
       "options": "CAD\nSTL\n3MF\nOther",
-      "reqd": 1
+      "reqd": 1,
+      "in_list_view": 1
     },
     {
       "fieldname": "file_attachment",
       "label": "File",
       "fieldtype": "Attach",
-      "reqd": 1
+      "reqd": 1,
+      "in_list_view": 1
     },
     {
       "fieldname": "sha256",
